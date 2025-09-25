@@ -371,4 +371,36 @@ final String robotName = "Potato";
         try {Thread.sleep(50);} catch (InterruptedException e) {}
     }
 
+        public void fastTurn(int deg){
+        //a faster(but less accurate) version of the turn function
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        
+        
+        this.imu.resetYaw();
+        double pos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
+
+        //get within 15 degrees of target
+        while(Math.abs(deg - pos) > 15){
+            pos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
+
+            if (deg - pos >= 0){
+                frontLeft.setPower(0.8);
+                frontRight.setPower(-0.8);
+                backRight.setPower(-0.8);
+                backLeft.setPower(0.8);
+            } else {
+                frontLeft.setPower(-0.8);
+                frontRight.setPower(0.8);
+                backRight.setPower(0.8);
+                backLeft.setPower(-0.8);
+            }
+
+        }
+
+        //finishing turning with the more accurate function
+        turn(deg - pos);
+
+    }
+    
 }
