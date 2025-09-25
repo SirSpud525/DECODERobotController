@@ -91,7 +91,103 @@ final String robotName = "Potato";
 
     //TELEOP FUNCTION
 
+    public void gamePadPower(Gamepad gp1, Gamepad gp2, Telemetry telemetry) {
+            //Driving(gp1, telemetry);
+            potatoDrive(gp1, telemetry);
+    }
 
+    public void Driving(Gamepad gp1, Telemetry telemetry){
+        //uses driver input to speedup/slowdon as needed
+        double multiplier = Math.max(0.3, 1 - gp1.right_trigger);
+        double speedMode = (gp1.left_trigger);
+
+        //gets joystick input
+        double slowdown = 1.5;
+        final double drive = (-gp1.left_stick_y);
+        final double turn = (gp1.right_stick_x);
+        final double strafe = (gp1.left_stick_x);
+
+        //math to determine power - uses mecanum wheel equation
+        flDrivePower = (drive + strafe + turn);
+        frDrivePower = (drive - strafe - turn);
+        blDrivePower = (drive - strafe + turn);
+        brDrivePower = (drive + strafe - turn);
+
+        telemetry.addData("IMU-X", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).firstAngle);
+        telemetry.addData("IMU-Y", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).secondAngle);
+        telemetry.addData("IMU-Z", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).thirdAngle);
+
+        double imuPos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
+        telemetry.addData("IMU-Angle", imuPos);
+        telemetry.update();
+
+        if (speedMode > 0.1){
+            slowdown = 1;
+        }
+
+        //factor in slowdown and speedup
+        frontLeft.setPower(flDrivePower * multiplier / slowdown);
+        frontRight.setPower(frDrivePower * multiplier / slowdown);
+        backLeft.setPower(blDrivePower * multiplier / slowdown);
+        backRight.setPower(brDrivePower * multiplier / slowdown);
+    }
+
+    public void potatoDrive (Gamepad gp1, Telemetry telemetry){
+        //gyro driving function
+        //IMU setup
+        telemetry.addData("IMU-X", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).firstAngle);
+        telemetry.addData("IMU-Y", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).secondAngle);
+        telemetry.addData("IMU-Z", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).thirdAngle);
+
+        //reset button - zeroes the gyro
+        if (gp1.x == true){
+            imu.resetYaw();
+        }
+
+        //get IMU
+        double imuPos = (imu.getRobotYawPitchRollAngles().getYaw(RADIANS));
+        telemetry.addData("IMU-Angle", imuPos);
+
+        //math - uses trig functions to find the power for each motor
+        double change = Math.cos(-imuPos);
+        double sine = Math.sin(-imuPos);
+
+        double drive = (-gp1.left_stick_y);
+        double strafe = (gp1.left_stick_x);
+        double turn = (gp1.right_stick_x);
+
+        double driveCos = change * drive;
+        double driveSin = sine * drive;
+        double strafeSin = sine * strafe;
+        double strafeCos = change * strafe;
+
+        //divided by 1.5 is to account for strafing being slower than driving forward
+        double actualDrive = (driveCos + strafeSin) / 1.5;
+        double actualStrafe = -driveSin + strafeCos;
+
+        //set power
+        flDrivePower = (actualDrive + actualStrafe + turn);
+        frDrivePower = (actualDrive - actualStrafe - turn);
+        blDrivePower = (actualDrive - actualStrafe + turn);
+        brDrivePower = (actualDrive + actualStrafe - turn);
+
+        double slowdown = 0.85;
+
+        //adds or removes to speed based on user input
+        if (gp1.right_trigger >= 0.1){
+            slowdown = 0.25;
+        } else if (gp1.left_trigger >= 0.1) {
+            slowdown = 1.25;
+        }
+
+        frontLeft.setPower(flDrivePower * slowdown);
+        frontRight.setPower(frDrivePower * slowdown);
+        backLeft.setPower(blDrivePower * slowdown);
+        backRight.setPower(brDrivePower * slowdown);
+
+    }
+
+    
     //AUTO FUNCTIONS
 
 
