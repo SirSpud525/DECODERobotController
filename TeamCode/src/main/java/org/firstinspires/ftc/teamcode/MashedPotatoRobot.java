@@ -25,7 +25,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 public class MashedPotatoRobot {
 
 //GLOBAL VARIABLES AND INIT
-    
+
 final String robotName = "Potato";
     public double flDrivePower;
     public double frDrivePower;
@@ -82,19 +82,196 @@ final String robotName = "Potato";
 
     //UTILITY FUNCTIONS
     
-        private void setDriveMode(final DcMotor.RunMode mode) {
+    private void setDriveMode(final DcMotor.RunMode mode) {
         frontLeft.setMode(mode);
         frontRight.setMode(mode);
         backLeft.setMode(mode);
         backRight.setMode(mode);
     }
 
-    //TELEOP FUNCTION
+    public void drive(final double pow){
+        //Sets all motors to pow
+        frontLeft.setPower(pow);
+        backLeft.setPower(pow);
+        frontRight.setPower(pow);
+        backRight.setPower(pow);
+    }
 
+    //TELEOP FUNCTION
 
     //AUTO FUNCTIONS
 
+    private void enableAllMotors(final double p1, final double p2){
+        //abstraction, sets power to the TL & BR motors for p1, and TR & BL motors for p2
+        frontRight.setPower(p2);
+        backRight.setPower(p1);
+        frontLeft.setPower(p1);
+        backLeft.setPower(p2);
+    }
+
+    public void angularStrafe(int degrees, int distance) {
+        //Strafes the robot distance in "degrees" direction
+
+        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        double xDist = 1000;
+        double yDist = 1000;
+        final double error = 100;
+        final double slowdown = 1.8;
+
+        while (Math.abs(yDist - frontRight.getCurrentPosition()) > error || Math.abs(xDist - frontLeft.getCurrentPosition()) > error) {
+
+            double Pitch = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES); //makes sure that it strafes relative to the starting IMU pos
+            double angleInRadians = Math.toRadians(degrees + 315 - Pitch); //0 deg, would strafe right, 90 deg would strafe up, etc.
+            double cosValue = Math.cos(angleInRadians);
+            double sinValue = Math.sin(angleInRadians);
+            yDist = distance * sinValue;
+            xDist = distance * cosValue;
+
+            double x = cosValue;
+            double y = sinValue;
+
+            enableAllMotors(x / slowdown, y / slowdown);
+        }
+            drive(0.0);
+
+    }
+
+    public void strafe(int pos) {
+        //strafes the robot left and right
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        int flBrPos = pos;
+        int frBlPos = -pos;
+        double extra = 0.1;
+        final double tickDistance = 40;
+
+        if (pos > 0){
+            extra = 0.1;
+        } else {
+            extra = -0.1;
+        }
+
+        while (Math.abs(flBrPos - backRight.getCurrentPosition()) > tickDistance || Math.abs(flBrPos - frontLeft.getCurrentPosition()) > tickDistance) {
+            int flDistance = flBrPos - frontLeft.getCurrentPosition();
+            int frDistance = frBlPos - frontRight.getCurrentPosition();
+            int blDistance = frBlPos - backLeft.getCurrentPosition();
+            int brDistance = flBrPos - backRight.getCurrentPosition();
+
+            flDrivePower = (double)flDistance / (double)Math.abs(flBrPos);
+            blDrivePower = (double)blDistance / (double)Math.abs(frBlPos);
+            frDrivePower = (double)frDistance / (double)Math.abs(frBlPos);
+            brDrivePower = (double)brDistance / (double)Math.abs(flBrPos);
+
+            frontLeft.setPower(flDrivePower / 2 + extra);
+            frontRight.setPower(frDrivePower / 2 - extra);
+            backLeft.setPower(blDrivePower / 2 - extra);
+            backRight.setPower(brDrivePower / 2 + extra);
+
+        }
+
+        drive(0.0);
+
+        try {Thread.sleep(50);} catch (InterruptedException e) {}
+    }
+
+    public void driveTo(final int pos) {
+        //Drives pos distance
+        if (pos == 0) return;
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        final int delay = 20;
+        final int THRESHOLD = 35;
+        double ADDITIONAL_SPEED;
+
+        if (pos >= 0){
+            ADDITIONAL_SPEED = 0.1;
+        }else {
+            ADDITIONAL_SPEED = -0.1;
+        }
+
+        while (Math.abs(pos - frontLeft.getCurrentPosition()) > THRESHOLD || Math.abs(pos - frontRight.getCurrentPosition()) > THRESHOLD) {
+            int flDistance = pos - frontLeft.getCurrentPosition();
+            int frDistance = pos - frontRight.getCurrentPosition();
+            int blDistance = pos - backLeft.getCurrentPosition();
+            int brDistance = pos - backRight.getCurrentPosition();
+
+            ADDITIONAL_SPEED = (flDistance / Math.abs(flDistance)) * 0.1;
 
 
+            flDrivePower = (double) flDistance / (double) Math.abs(pos);
+            blDrivePower = (double) blDistance / (double) Math.abs(pos);
+            frDrivePower = (double) frDistance / (double) Math.abs(pos);
+            brDrivePower = (double) brDistance / (double) Math.abs(pos);
+
+            frontLeft.setPower(flDrivePower / 3 + ADDITIONAL_SPEED);
+            frontRight.setPower(frDrivePower / 3 + ADDITIONAL_SPEED);
+            backLeft.setPower(blDrivePower / 3 + ADDITIONAL_SPEED);
+            backRight.setPower(brDrivePower / 3 + ADDITIONAL_SPEED);
+
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+            }
+        }
+
+        drive(0.0);
+    }
+
+    public void turn(double target) {
+        //Target is how many degrees, turns slowly but accurately
+        this.imu.resetYaw();
+
+        if (target == 0) return;
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        double currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
+        double error = target - currentPosition;
+
+        double kp = 1;
+
+        final int DELAY = 50;
+
+        while (Math.abs(error) > 2) {
+            currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
+            error = target - currentPosition;
+
+            double proportional = error * kp;
+
+            double turn = proportional / (180 * kp);
+            final double mult = 2.4;
+
+            flDrivePower = -turn * mult;
+            frDrivePower = turn * mult;
+            blDrivePower = -turn * mult;
+            brDrivePower = turn * mult;
+
+            frontLeft.setPower(flDrivePower / 2);
+            frontRight.setPower(frDrivePower / 2);
+            backLeft.setPower(blDrivePower / 2);
+            backRight.setPower(brDrivePower / 2);
+
+            try {Thread.sleep(DELAY);} catch (InterruptedException e) {}
+        }
+
+        drive(0.0);
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        try {Thread.sleep(50);} catch (InterruptedException e) {}
+    }
     
 }
