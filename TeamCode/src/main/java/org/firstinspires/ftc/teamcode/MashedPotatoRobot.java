@@ -86,10 +86,10 @@ final String robotName = "Potato";
         //Gives an angle based on distance
         double v0 = (2 * 125 * 0.02) / (0.075); //initial velocity
         double constant = 9.8 / v0;
-        double height = 0.98;
+        double height = 0.9845;
         double discriminant = 1 - dist * dist * constant * constant - 2 * height * constant;
-        double theta = Math.atan( v0 * (1 + Math.sqrt(discriminant)));
-        return theta;
+        double theta = Math.atan( v0 * (1 + Math.sqrt(discriminant)) / (9.8 * dist)); 
+        return theta; //Returns angle
     }
     
     private void setDriveMode(final DcMotor.RunMode mode) {
