@@ -27,6 +27,7 @@ public class MashedPotatoRobot {
 //GLOBAL VARIABLES AND INIT
 
 final String robotName = "Potato";
+    public ElapsedTime driveModeDebounce = new ElapsedTime();
     public double flDrivePower;
     public double frDrivePower;
     public double brDrivePower;
@@ -133,12 +134,28 @@ final String robotName = "Potato";
     //TELEOP FUNCTIONS
 
     public void gamePadPower(Gamepad gp1, Gamepad gp2, Telemetry telemetry) {
-            //Driving(gp1, telemetry);
-            potatoDrive(gp1, telemetry);
+            if (gyroDrive){
+                gyroDrive(gp1, telemetry);
+            }else{
+                Driving(gp1, telemetry);
+            }
+            toggleGyro(gp1);
+    }
+
+    public void toggleGyro(Gamepad gp1){
+        //Toggles gyro on or off
+
+        //toggles GyroDrive boolean
+        if (gp1.x){
+            if (driveModeDebounce.milliseconds() < 500) return;
+            driveModeDebounce.reset();
+
+            gyroDrive = !gyroDrive;
+        }
     }
 
     public void Driving(Gamepad gp1, Telemetry telemetry){
-        //uses driver input to speedup/slowdon as needed
+        //uses driver input to speedup/slowdown as needed
         double multiplier = Math.max(0.3, 1 - gp1.right_trigger);
         double speedMode = (gp1.left_trigger);
 
@@ -173,7 +190,7 @@ final String robotName = "Potato";
         backRight.setPower(brDrivePower * multiplier / slowdown);
     }
 
-    public void potatoDrive (Gamepad gp1, Telemetry telemetry){
+    public void gyroDrive (Gamepad gp1, Telemetry telemetry){
         //gyro driving function
         //IMU setup
         telemetry.addData("IMU-X", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).firstAngle);
