@@ -82,6 +82,28 @@ final String robotName = "Potato";
 
     //UTILITY FUNCTIONS
 
+    public void handleMotorPower(){
+
+        frontLeft.setPower(flDrivePower);
+        frontRight.setPower(frDrivePower);
+        backLeft.setPower(blDrivePower);
+        backRight.setPower(brDrivePower);
+
+    }
+    public void brake() {
+        flDrivePower = 0.0;
+        blDrivePower = 0.0;
+        frDrivePower = 0.0;
+        brDrivePower = 0.0;
+
+        frontLeft.setPower(0.0);
+        backLeft.setPower(0.0);
+        frontRight.setPower(0.0);
+        backRight.setPower(0.0);
+    }
+    public void sleep(int milliseconds) {
+        try {Thread.sleep(milliseconds);} catch (InterruptedException ignored) {}
+    }
     public double distToAngle(double dist){
         //Gives an angle based on distance
         double v0 = (2 * 125 * 0.02) / (0.075); //initial velocity
@@ -107,7 +129,7 @@ final String robotName = "Potato";
         backRight.setPower(pow);
     }
 
-    //TELEOP FUNCTION
+    //TELEOP FUNCTIONS
 
     public void gamePadPower(Gamepad gp1, Gamepad gp2, Telemetry telemetry) {
             //Driving(gp1, telemetry);
@@ -210,24 +232,27 @@ final String robotName = "Potato";
 
     private void enableAllMotors(final double p1, final double p2){
         //abstraction, sets power to the TL & BR motors for p1, and TR & BL motors for p2
-        frontRight.setPower(p2);
-        backRight.setPower(p1);
-        frontLeft.setPower(p1);
-        backLeft.setPower(p2);
+        frDrivePower = p2;
+        brDrivePower = p1;
+        flDrivePower = p1;
+        blDrivePower = p2;
     }
 
     public void angularStrafe(int degrees, int distance) {
         //Strafes the robot distance in "degrees" direction
 
-        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //changes here should be fine, but the commented old version stays until it's tested, then delete it
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         double xDist = 1000;
         double yDist = 1000;
         final double error = 100;
@@ -246,6 +271,7 @@ final String robotName = "Potato";
             double y = sinValue;
 
             enableAllMotors(x / slowdown, y / slowdown);
+            handleMotorPower();
         }
             drive(0.0);
 
@@ -278,10 +304,12 @@ final String robotName = "Potato";
             frDrivePower = (double)frDistance / (double)Math.abs(frBlPos);
             brDrivePower = (double)brDistance / (double)Math.abs(flBrPos);
 
-            frontLeft.setPower(flDrivePower / 2 + extra);
-            frontRight.setPower(frDrivePower / 2 - extra);
-            backLeft.setPower(blDrivePower / 2 - extra);
-            backRight.setPower(brDrivePower / 2 + extra);
+            flDrivePower = flDrivePower / 2 + extra;
+            frDrivePower = frDrivePower / 2 - extra;
+            blDrivePower = blDrivePower / 2 - extra;
+            brDrivePower = brDrivePower / 2 + extra;
+
+            handleMotorPower();
 
         }
 
@@ -321,10 +349,12 @@ final String robotName = "Potato";
             frDrivePower = (double) frDistance / (double) Math.abs(pos);
             brDrivePower = (double) brDistance / (double) Math.abs(pos);
 
-            frontLeft.setPower(flDrivePower / 3 + ADDITIONAL_SPEED);
-            frontRight.setPower(frDrivePower / 3 + ADDITIONAL_SPEED);
-            backLeft.setPower(blDrivePower / 3 + ADDITIONAL_SPEED);
-            backRight.setPower(brDrivePower / 3 + ADDITIONAL_SPEED);
+            flDrivePower = flDrivePower / 3 + ADDITIONAL_SPEED;
+            frDrivePower = frDrivePower / 3 + ADDITIONAL_SPEED;
+            blDrivePower = blDrivePower / 3 + ADDITIONAL_SPEED;
+            brDrivePower = brDrivePower / 3 + ADDITIONAL_SPEED;
+
+            handleMotorPower();
 
             try {
                 Thread.sleep(delay);
@@ -365,10 +395,12 @@ final String robotName = "Potato";
             blDrivePower = -turn * mult;
             brDrivePower = turn * mult;
 
-            frontLeft.setPower(flDrivePower / 2);
-            frontRight.setPower(frDrivePower / 2);
-            backLeft.setPower(blDrivePower / 2);
-            backRight.setPower(brDrivePower / 2);
+            flDrivePower = flDrivePower / 2;
+            frDrivePower = frDrivePower / 2;
+            blDrivePower = blDrivePower / 2;
+            brDrivePower = brDrivePower / 2;
+
+            handleMotorPower();
 
             try {Thread.sleep(DELAY);} catch (InterruptedException e) {}
         }
@@ -395,16 +427,18 @@ final String robotName = "Potato";
             pos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
 
             if (deg - pos >= 0){
-                frontLeft.setPower(0.8);
-                frontRight.setPower(-0.8);
-                backRight.setPower(-0.8);
-                backLeft.setPower(0.8);
+                flDrivePower = 0.8;
+                frDrivePower = -0.8;
+                brDrivePower = -0.8;
+                blDrivePower = 0.8;
             } else {
-                frontLeft.setPower(-0.8);
-                frontRight.setPower(0.8);
-                backRight.setPower(0.8);
-                backLeft.setPower(-0.8);
+                flDrivePower = -0.8;
+                frDrivePower = 0.8;
+                brDrivePower = 0.8;
+                blDrivePower = -0.8;
             }
+
+            handleMotorPower();
 
         }
 
@@ -412,5 +446,7 @@ final String robotName = "Potato";
         turn(deg - pos);
 
     }
-    
+
+
+
 }
