@@ -28,15 +28,19 @@ public class MashedPotatoRobot {
 
 final String robotName = "Potato";
     public ElapsedTime driveModeDebounce = new ElapsedTime();
+    private ElapsedTime pushUpDebounce = new ElapsedTime();
     public double flDrivePower;
     public double frDrivePower;
     public double brDrivePower;
     public double blDrivePower;
     public boolean gyroDrive = true;
+    public boolean pushing = false;
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backLeft;
     private DcMotor backRight;
+    private DcMotor slide1;
+    private DcMotor slide2;
     public IMU imu;
 
     //potato
@@ -46,14 +50,15 @@ final String robotName = "Potato";
 
     public void init(final HardwareMap hardwareMap) {
         // Initialize hardware map - declares code version of physical motors using the driver/control hub
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        backRight = hardwareMap.get(DcMotor.class, "backRight");
+        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); //4
+        frontRight = hardwareMap.get(DcMotor.class, "frontRight"); //3
+        backLeft = hardwareMap.get(DcMotor.class, "backLeft"); //1
+        backRight = hardwareMap.get(DcMotor.class, "backRight"); //2
+        slide1 = hardwareMap.get(DcMotor.class, "slide1");
+        slide2 = hardwareMap.get(DcMotor.class, "slide2");
 
         // Set reverse motors
-        frontRight.setDirection(DcMotor.Direction.REVERSE);
-        backRight.setDirection(DcMotor.Direction.REVERSE);
+
         //encoders
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -68,6 +73,8 @@ final String robotName = "Potato";
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        slide1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        slide2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Set up the IMU (gyro/angle sensor)
         IMU.Parameters imuParameters = new IMU.Parameters(
@@ -140,6 +147,7 @@ final String robotName = "Potato";
                 Driving(gp1, telemetry);
             }
             toggleGyro(gp1);
+            pushUp(gp2);
     }
 
     public void toggleGyro(Gamepad gp1){
@@ -153,7 +161,23 @@ final String robotName = "Potato";
             gyroDrive = !gyroDrive;
         }
     }
+    public void pushUp(Gamepad gp2){
+        if (gp2.x){
+            if (pushUpDebounce.milliseconds() < 500) return;
 
+            pushUpDebounce.reset();
+            pushing = !pushing;
+        }
+
+        if (pushing){
+            slide1.setPower(0.1);
+            slide2.setPower(0.1);
+        } else {
+            slide1.setPower(0.0);
+            slide2.setPower(0.0);
+        }
+
+    }
     public void Driving(Gamepad gp1, Telemetry telemetry){
         //uses driver input to speedup/slowdown as needed
         double multiplier = Math.max(0.3, 1 - gp1.right_trigger);
