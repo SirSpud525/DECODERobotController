@@ -31,6 +31,7 @@ final String robotName = "Potato";
     public double frDrivePower;
     public double brDrivePower;
     public double blDrivePower;
+    public boolean gyroDrive = true;
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backLeft;
@@ -317,7 +318,84 @@ final String robotName = "Potato";
 
         try {Thread.sleep(50);} catch (InterruptedException e) {}
     }
+    public void accurateStrafe(int pos) {
+        double targetAngle = 0;
 
+        double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double errorAngle = targetAngle - currentAngle;
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        brake();
+
+        final int DELAY = 20;
+
+        int flBrPos = pos;
+        int frBlPos = -pos;
+
+        while (Math.abs((Math.abs(flBrPos - frontLeft.getCurrentPosition()) + Math.abs(frBlPos - frontRight.getCurrentPosition())) / 2) > 20) {
+            int flDistance = flBrPos - frontLeft.getCurrentPosition();
+            int frDistance = frBlPos - frontRight.getCurrentPosition();
+            int blDistance = frBlPos - backLeft.getCurrentPosition();
+            int brDistance = flBrPos - backRight.getCurrentPosition();
+
+            flDrivePower = (double)flDistance / (double)Math.abs(flBrPos);
+            blDrivePower = (double)blDistance / (double)Math.abs(frBlPos);
+            frDrivePower = (double)frDistance / (double)Math.abs(frBlPos);
+            brDrivePower = (double)brDistance / (double)Math.abs(flBrPos);
+
+            if (Math.abs(flBrPos - backRight.getCurrentPosition()) > 100 || Math.abs(flBrPos - frontLeft.getCurrentPosition()) > 100) {
+                flDrivePower = Math.signum(flDrivePower);
+                frDrivePower = Math.signum(frDrivePower);
+                blDrivePower = Math.signum(blDrivePower);
+                brDrivePower = Math.signum(brDrivePower);
+            } else {
+                flDrivePower = (flDrivePower) + (Math.signum(flDrivePower) * 0.15);
+                frDrivePower = (frDrivePower) + (Math.signum(frDrivePower) * 0.15);
+                blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.15);
+                brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.15);
+            }
+
+            // Correct angle
+            currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            errorAngle = targetAngle - currentAngle;
+
+            double kp = 1;
+
+            double proportional = errorAngle * kp;
+
+            double turn = proportional / (180 * kp);
+
+            double flDrivePowerCorrection = -turn;
+            double frDrivePowerCorrection = turn;
+            double blDrivePowerCorrection = -turn;
+            double brDrivePowerCorrection = turn;
+
+            flDrivePowerCorrection = (flDrivePowerCorrection / 2) + (Math.signum(flDrivePowerCorrection) * 0.1);
+            frDrivePowerCorrection = (frDrivePowerCorrection / 2) + (Math.signum(frDrivePowerCorrection) * 0.1);
+            blDrivePowerCorrection = (blDrivePowerCorrection / 2) + (Math.signum(blDrivePowerCorrection) * 0.1);
+            brDrivePowerCorrection = (brDrivePowerCorrection / 2) + (Math.signum(brDrivePowerCorrection) * 0.1);
+
+            flDrivePower += flDrivePowerCorrection;
+            frDrivePower += frDrivePowerCorrection;
+            blDrivePower += blDrivePowerCorrection;
+            brDrivePower += brDrivePowerCorrection;
+
+            // there was a slowdown here, I removed it cus not responsible, could be an issue later
+
+            handleMotorPower();
+
+            sleep(DELAY);
+        }
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
     public void driveTo(final int pos) {
         //Drives pos distance
         if (pos == 0) return;
@@ -447,6 +525,46 @@ final String robotName = "Potato";
 
     }
 
+    public void turnToFromHere(double target) {
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        double currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double error = target - currentPosition;
+
+        double kp = 1;
+
+        final int DELAY = 50;
+
+        while (Math.abs(error) > 3) {
+            currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            error = target - currentPosition;
+
+            double proportional = error * kp;
+
+            double turn = proportional / (180 * kp);
+
+            flDrivePower = -turn;
+            frDrivePower = turn;
+            blDrivePower = -turn;
+            brDrivePower = turn;
+
+            flDrivePower = (flDrivePower) + (Math.signum(flDrivePower) * 0.1);
+            frDrivePower = (frDrivePower) + (Math.signum(frDrivePower) * 0.1);
+            blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.1);
+            brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.1);
+
+            //removed slowdown stuff
+
+            handleMotorPower();
+
+            sleep(DELAY);
+        }
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
 
 }
