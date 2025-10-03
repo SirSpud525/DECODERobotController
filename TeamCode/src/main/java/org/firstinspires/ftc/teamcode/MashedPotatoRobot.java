@@ -222,7 +222,7 @@ final String robotName = "Potato";
         telemetry.addData("IMU-Z", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).thirdAngle);
 
         //reset button - zeroes the gyro
-        if (gp1.x == true){
+        if (gp1.y == true){
             imu.resetYaw();
         }
 
