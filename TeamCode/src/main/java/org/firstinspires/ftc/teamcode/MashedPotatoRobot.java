@@ -9,6 +9,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -50,14 +51,16 @@ final String robotName = "Potato";
 
     public void init(final HardwareMap hardwareMap) {
         // Initialize hardware map - declares code version of physical motors using the driver/control hub
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); //4
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight"); //3
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft"); //1
-        backRight = hardwareMap.get(DcMotor.class, "backRight"); //2
-        slide1 = hardwareMap.get(DcMotor.class, "slide1");
-        slide2 = hardwareMap.get(DcMotor.class, "slide2");
+        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); //3
+        frontRight = hardwareMap.get(DcMotor.class, "frontRight"); //2
+        backLeft = hardwareMap.get(DcMotor.class, "backLeft"); //0
+        backRight = hardwareMap.get(DcMotor.class, "backRight"); //1
+//        slide1 = hardwareMap.get(DcMotor.class, "slide1");
+//        slide2 = hardwareMap.get(DcMotor.class, "slide2");
 
         // Set reverse motors
+backRight.setDirection(DcMotorSimple.Direction.REVERSE);
+frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         //encoders
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -73,13 +76,13 @@ final String robotName = "Potato";
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        slide1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        slide2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        slide1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        slide2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Set up the IMU (gyro/angle sensor)
         IMU.Parameters imuParameters = new IMU.Parameters(
                 new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
+                        RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
                         RevHubOrientationOnRobot.UsbFacingDirection.UP
                 )
         );
@@ -147,7 +150,7 @@ final String robotName = "Potato";
                 Driving(gp1, telemetry);
             }
             toggleGyro(gp1);
-            pushUp(gp2);
+//            pushUp(gp2);
     }
 
     public void toggleGyro(Gamepad gp1){
