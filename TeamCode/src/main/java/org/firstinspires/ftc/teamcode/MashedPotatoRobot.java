@@ -272,7 +272,6 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
     }
 
-
     //AUTO FUNCTIONS
 
     private void enableAllMotors(final double p1, final double p2){
