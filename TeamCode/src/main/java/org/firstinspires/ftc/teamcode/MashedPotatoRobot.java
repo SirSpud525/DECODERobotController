@@ -1,26 +1,24 @@
 package org.firstinspires.ftc.teamcode;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 
 import com.qualcomm.hardware.bosch.BHI260IMU;
-import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 
 public class MashedPotatoRobot {
@@ -43,6 +41,7 @@ final String robotName = "Potato";
     private DcMotor slide1;
     private DcMotor slide2;
     public IMU imu;
+    public GoBildaPinpointDriver odo;
 
     //potato
     //mashed potatoes
@@ -90,6 +89,16 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         imu.initialize(imuParameters);
 
         this.imu.resetYaw();
+
+        //Initializing odometry
+        odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
+
+        odo.setOffsets(37.6,53.0, DistanceUnit.MM);
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+
+        odo.resetPosAndIMU();
+        //odo.setPosition(new Pose2D(DistanceUnit.MM, -923.925, 1601.47, RADIANS, 0));
     }
 
     //UTILITY FUNCTIONS
@@ -116,8 +125,9 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
     public void sleep(int milliseconds) {
         try {Thread.sleep(milliseconds);} catch (InterruptedException ignored) {}
     }
-    public double distToAngle(double dist){
+    public double distToAngle(){
         //Gives an angle based on distance
+        double dist = Math.sqrt(odo.getPosX(DistanceUnit.MM)*odo.getPosX(DistanceUnit.MM)+odo.getPosY(DistanceUnit.MM)*odo.getPosY(DistanceUnit.MM));
         double v0 = (2 * 125 * 0.02) / (0.075); //initial velocity
         double constant = 9.8 / v0;
         double height = 0.9845;
@@ -281,7 +291,6 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         flDrivePower = p1;
         blDrivePower = p2;
     }
-
     public void angularStrafe(int degrees, int distance) {
         //Strafes the robot distance in "degrees" direction
 
@@ -320,7 +329,6 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
             drive(0.0);
 
     }
-
     public void strafe(int pos) {
         //strafes the robot left and right
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -485,7 +493,6 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         drive(0.0);
     }
-
     public void turn(double target) {
         //Target is how many degrees, turns slowly but accurately
         this.imu.resetYaw();
@@ -533,8 +540,7 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         try {Thread.sleep(50);} catch (InterruptedException e) {}
     }
-
-        public void fastTurn(int deg){
+    public void fastTurn(int deg){
         //a faster(but less accurate) version of the turn function
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -567,7 +573,6 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         turn(deg - pos);
 
     }
-
     public void turnToFromHere(double target) {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -608,6 +613,22 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+    public void donut(){
+
+        double strafe = 1.0;
+        double turn = 0.25;
+
+        flDrivePower = (strafe + turn);
+        frDrivePower = (-strafe - turn);
+        blDrivePower = (-strafe + turn);
+        brDrivePower = (strafe - turn);
+
+        for(int i = 200; i >= 0; i--){
+            handleMotorPower();
+            sleep(25);
+        }
+
     }
 
 }
