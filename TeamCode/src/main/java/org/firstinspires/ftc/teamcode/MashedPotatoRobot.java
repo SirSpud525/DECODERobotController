@@ -126,8 +126,10 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         try {Thread.sleep(milliseconds);} catch (InterruptedException ignored) {}
     }
     public double distToAngle(){
-        //Gives an angle based on distance
-        double dist = Math.sqrt(odo.getPosX(DistanceUnit.MM)*odo.getPosX(DistanceUnit.MM)+odo.getPosY(DistanceUnit.MM)*odo.getPosY(DistanceUnit.MM));
+        //Gives an angle based on distance to land the artifact in the basket
+        double x = odo.getPosX(DistanceUnit.MM);
+        double y = odo.getPosY(DistanceUnit.MM);
+        double dist = Math.sqrt(x*x+y*y);
         double v0 = (2 * 125 * 0.02) / (0.075); //initial velocity
         double constant = 9.8 / v0;
         double height = 0.9845;
@@ -135,7 +137,16 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         double theta = Math.atan( v0 * (1 + Math.sqrt(discriminant)) / (9.8 * dist)); 
         return theta; //Returns angle
     }
-    
+    public double distToVelocity(double theta){
+        //Given theta (The angle at which the artifact shoots at) return the velocity needed to reach the basket
+        double x = odo.getPosX(DistanceUnit.MM);
+        double y = odo.getPosY(DistanceUnit.MM);
+        double dist = Math.sqrt(x*x+y*y);
+        double secant = 1/Math.cos(Math.toRadians(theta));
+        double numerator = -9.8 * dist * dist;
+        double denominator = 2 * (.9845 -dist * Math.tan(Math.toRadians(theta)));
+        return secant * Math.sqrt(numerator / denominator);
+    }
     private void setDriveMode(final DcMotor.RunMode mode) {
         frontLeft.setMode(mode);
         frontRight.setMode(mode);
