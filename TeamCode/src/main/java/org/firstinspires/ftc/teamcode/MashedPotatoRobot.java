@@ -19,27 +19,35 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.internal.ftdi.eeprom.FT_EE_232A_Ctrl;
 
 
 public class MashedPotatoRobot {
 
 //GLOBAL VARIABLES AND INIT
 
-final String robotName = "Potato";
+    final String robotName = "Potato";
     public ElapsedTime driveModeDebounce = new ElapsedTime();
     private ElapsedTime pushUpDebounce = new ElapsedTime();
+    private ElapsedTime intakeDebounce = new ElapsedTime();
     public double flDrivePower;
     public double frDrivePower;
     public double brDrivePower;
     public double blDrivePower;
+    public double slide1Power;
+    public double slide2Power;
+    public double intakePower;
     public boolean gyroDrive = true;
     public boolean pushing = false;
+    public int intakeMax;
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backLeft;
     private DcMotor backRight;
     private DcMotor slide1;
     private DcMotor slide2;
+    private DcMotor shootMotor;
+    private DcMotor intake;
     public IMU imu;
     public GoBildaPinpointDriver odo;
 
@@ -50,33 +58,36 @@ final String robotName = "Potato";
 
     public void init(final HardwareMap hardwareMap) {
         // Initialize hardware map - declares code version of physical motors using the driver/control hub
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); //3
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight"); //2
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft"); //0
-        backRight = hardwareMap.get(DcMotor.class, "backRight"); //1
+        //frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); //3
+        //frontRight = hardwareMap.get(DcMotor.class, "frontRight"); //2
+        //backLeft = hardwareMap.get(DcMotor.class, "backLeft"); //0
+        //backRight = hardwareMap.get(DcMotor.class, "backRight"); //1
 //        slide1 = hardwareMap.get(DcMotor.class, "slide1");
 //        slide2 = hardwareMap.get(DcMotor.class, "slide2");
+        shootMotor = hardwareMap.get(DcMotor.class, "shoot");
 
         // Set reverse motors
-backRight.setDirection(DcMotorSimple.Direction.REVERSE);
-frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+//        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
+//        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        shootMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         //encoders
-        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        frontLeft.setTargetPosition(0);
-        backLeft.setTargetPosition(0);
-        backRight.setTargetPosition(0);
-        frontRight.setTargetPosition(0);
+//        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//
+//        frontLeft.setTargetPosition(0);
+//        backLeft.setTargetPosition(0);
+//        backRight.setTargetPosition(0);
+//        frontRight.setTargetPosition(0);
 
         //zero power behavior
-        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 //        slide1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 //        slide2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shootMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Set up the IMU (gyro/angle sensor)
         IMU.Parameters imuParameters = new IMU.Parameters(
@@ -91,26 +102,35 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         this.imu.resetYaw();
 
         //Initializing odometry
-        odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
-
-        odo.setOffsets(37.6,53.0, DistanceUnit.MM);
-        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-
-        odo.resetPosAndIMU();
+//        odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
+//
+//        odo.setOffsets(37.6, 53.0, DistanceUnit.MM);
+//        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+//        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+//
+//        odo.resetPosAndIMU();
         //odo.setPosition(new Pose2D(DistanceUnit.MM, -923.925, 1601.47, RADIANS, 0));
     }
 
     //UTILITY FUNCTIONS
 
-    public void handleMotorPower(){
+    public void handleMotorPower() {
 
         frontLeft.setPower(flDrivePower);
         frontRight.setPower(frDrivePower);
         backLeft.setPower(blDrivePower);
         backRight.setPower(brDrivePower);
 
+        if(intakeDebounce.milliseconds() > intakeMax)
+        {
+            intake.setPower(0);
+        }
+        else
+        {
+            intake.setPower(1);
+        }
     }
+
     public void brake() {
         flDrivePower = 0.0;
         blDrivePower = 0.0;
@@ -122,31 +142,38 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         frontRight.setPower(0.0);
         backRight.setPower(0.0);
     }
+
     public void sleep(int milliseconds) {
-        try {Thread.sleep(milliseconds);} catch (InterruptedException ignored) {}
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException ignored) {
+        }
     }
-    public double distToAngle(){
+
+    public double distToAngle() {
         //Gives an angle based on distance to land the artifact in the basket
         double x = odo.getPosX(DistanceUnit.MM);
         double y = odo.getPosY(DistanceUnit.MM);
-        double dist = Math.sqrt(x*x+y*y);
+        double dist = Math.sqrt(x * x + y * y);
         double v0 = (2 * 125 * 0.02) / (0.075); //initial velocity
         double constant = 9.8 / v0;
         double height = 0.9845;
         double discriminant = 1 - dist * dist * constant * constant - 2 * height * constant;
-        double theta = Math.atan( v0 * (1 + Math.sqrt(discriminant)) / (9.8 * dist)); 
+        double theta = Math.atan(v0 * (1 + Math.sqrt(discriminant)) / (9.8 * dist));
         return theta; //Returns angle
     }
-    public double distToVelocity(double theta){
+
+    public double distToVelocity(double theta) {
         //Given theta (The angle at which the artifact shoots at) return the velocity needed to reach the basket
         double x = odo.getPosX(DistanceUnit.MM);
         double y = odo.getPosY(DistanceUnit.MM);
-        double dist = Math.sqrt(x*x+y*y);
-        double secant = 1/Math.cos(Math.toRadians(theta));
+        double dist = Math.sqrt(x * x + y * y);
+        double secant = 1 / Math.cos(Math.toRadians(theta));
         double numerator = -9.8 * dist * dist;
-        double denominator = 2 * (.9845 -dist * Math.tan(Math.toRadians(theta)));
+        double denominator = 2 * (.9845 - dist * Math.tan(Math.toRadians(theta)));
         return secant * Math.sqrt(numerator / denominator);
     }
+
     private void setDriveMode(final DcMotor.RunMode mode) {
         frontLeft.setMode(mode);
         frontRight.setMode(mode);
@@ -154,7 +181,7 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setMode(mode);
     }
 
-    public void drive(final double pow){
+    public void drive(final double pow) {
         //Sets all motors to pow
         frontLeft.setPower(pow);
         backLeft.setPower(pow);
@@ -165,35 +192,37 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
     //TELEOP FUNCTIONS
 
     public void gamePadPower(Gamepad gp1, Gamepad gp2, Telemetry telemetry) {
-            if (gyroDrive){
-                gyroDrive(gp1, telemetry);
-            }else{
-                Driving(gp1, telemetry);
-            }
-            toggleGyro(gp1);
+//        if (gyroDrive) {
+//            gyroDrive(gp1, telemetry);
+//        } else {
+//            Driving(gp1, telemetry);
+//        }
+//        toggleGyro(gp1);
 //            pushUp(gp2);
+        shooting(gp2);
     }
 
-    public void toggleGyro(Gamepad gp1){
+    public void toggleGyro(Gamepad gp1) {
         //Toggles gyro on or off
 
         //toggles GyroDrive boolean
-        if (gp1.x){
+        if (gp1.x) {
             if (driveModeDebounce.milliseconds() < 500) return;
             driveModeDebounce.reset();
 
             gyroDrive = !gyroDrive;
         }
     }
-    public void pushUp(Gamepad gp2){
-        if (gp2.x){
+
+    public void pushUp(Gamepad gp2) {
+        if (gp2.x) {
             if (pushUpDebounce.milliseconds() < 500) return;
 
             pushUpDebounce.reset();
             pushing = !pushing;
         }
 
-        if (pushing){
+        if (pushing) {
             slide1.setPower(0.1);
             slide2.setPower(0.1);
         } else {
@@ -202,7 +231,15 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         }
 
     }
-    public void Driving(Gamepad gp1, Telemetry telemetry){
+    public void shooting(Gamepad gp2){
+        double sign = Math.signum(gp2.right_trigger);
+        if (sign == 1){
+            shootMotor.setPower(1.0);
+        } else {
+            shootMotor.setPower(0.0);
+        }
+    }
+    public void Driving(Gamepad gp1, Telemetry telemetry) {
         //uses driver input to speedup/slowdown as needed
         double multiplier = Math.max(0.3, 1 - gp1.right_trigger);
         double speedMode = (gp1.left_trigger);
@@ -227,7 +264,7 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         telemetry.addData("IMU-Angle", imuPos);
         telemetry.update();
 
-        if (speedMode > 0.1){
+        if (speedMode > 0.1) {
             slowdown = 1;
         }
 
@@ -238,7 +275,7 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setPower(brDrivePower * multiplier / slowdown);
     }
 
-    public void gyroDrive (Gamepad gp1, Telemetry telemetry){
+    public void gyroDrive(Gamepad gp1, Telemetry telemetry) {
         //gyro driving function
         //IMU setup
         telemetry.addData("IMU-X", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).firstAngle);
@@ -246,7 +283,7 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         telemetry.addData("IMU-Z", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).thirdAngle);
 
         //reset button - zeroes the gyro
-        if (gp1.y == true){
+        if (gp1.y == true) {
             imu.resetYaw();
         }
 
@@ -280,7 +317,7 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         double slowdown = 0.85;
 
         //adds or removes to speed based on user input
-        if (gp1.right_trigger >= 0.1){
+        if (gp1.right_trigger >= 0.1) {
             slowdown = 0.25;
         } else if (gp1.left_trigger >= 0.1) {
             slowdown = 1.25;
@@ -295,13 +332,14 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
     //AUTO FUNCTIONS
 
-    private void enableAllMotors(final double p1, final double p2){
+    private void enableAllMotors(final double p1, final double p2) {
         //abstraction, sets power to the TL & BR motors for p1, and TR & BL motors for p2
         frDrivePower = p2;
         brDrivePower = p1;
         flDrivePower = p1;
         blDrivePower = p2;
     }
+
     public void angularStrafe(int degrees, int distance) {
         //Strafes the robot distance in "degrees" direction
 
@@ -337,9 +375,10 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
             enableAllMotors(x / slowdown, y / slowdown);
             handleMotorPower();
         }
-            drive(0.0);
+        drive(0.0);
 
     }
+
     public void strafe(int pos) {
         //strafes the robot left and right
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -350,7 +389,7 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         double extra = 0.1;
         final double tickDistance = 40;
 
-        if (pos > 0){
+        if (pos > 0) {
             extra = 0.1;
         } else {
             extra = -0.1;
@@ -362,10 +401,10 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
             int blDistance = frBlPos - backLeft.getCurrentPosition();
             int brDistance = flBrPos - backRight.getCurrentPosition();
 
-            flDrivePower = (double)flDistance / (double)Math.abs(flBrPos);
-            blDrivePower = (double)blDistance / (double)Math.abs(frBlPos);
-            frDrivePower = (double)frDistance / (double)Math.abs(frBlPos);
-            brDrivePower = (double)brDistance / (double)Math.abs(flBrPos);
+            flDrivePower = (double) flDistance / (double) Math.abs(flBrPos);
+            blDrivePower = (double) blDistance / (double) Math.abs(frBlPos);
+            frDrivePower = (double) frDistance / (double) Math.abs(frBlPos);
+            brDrivePower = (double) brDistance / (double) Math.abs(flBrPos);
 
             flDrivePower = flDrivePower / 2 + extra;
             frDrivePower = frDrivePower / 2 - extra;
@@ -378,8 +417,12 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         drive(0.0);
 
-        try {Thread.sleep(50);} catch (InterruptedException e) {}
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+        }
     }
+
     public void accurateStrafe(int pos) {
         double targetAngle = 0;
 
@@ -404,10 +447,10 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
             int blDistance = frBlPos - backLeft.getCurrentPosition();
             int brDistance = flBrPos - backRight.getCurrentPosition();
 
-            flDrivePower = (double)flDistance / (double)Math.abs(flBrPos);
-            blDrivePower = (double)blDistance / (double)Math.abs(frBlPos);
-            frDrivePower = (double)frDistance / (double)Math.abs(frBlPos);
-            brDrivePower = (double)brDistance / (double)Math.abs(flBrPos);
+            flDrivePower = (double) flDistance / (double) Math.abs(flBrPos);
+            blDrivePower = (double) blDistance / (double) Math.abs(frBlPos);
+            frDrivePower = (double) frDistance / (double) Math.abs(frBlPos);
+            brDrivePower = (double) brDistance / (double) Math.abs(flBrPos);
 
             if (Math.abs(flBrPos - backRight.getCurrentPosition()) > 100 || Math.abs(flBrPos - frontLeft.getCurrentPosition()) > 100) {
                 flDrivePower = Math.signum(flDrivePower);
@@ -458,6 +501,7 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
+
     public void driveTo(final int pos) {
         //Drives pos distance
         if (pos == 0) return;
@@ -469,9 +513,9 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         final int THRESHOLD = 35;
         double ADDITIONAL_SPEED;
 
-        if (pos >= 0){
+        if (pos >= 0) {
             ADDITIONAL_SPEED = 0.1;
-        }else {
+        } else {
             ADDITIONAL_SPEED = -0.1;
         }
 
@@ -504,6 +548,7 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         drive(0.0);
     }
+
     public void turn(double target) {
         //Target is how many degrees, turns slowly but accurately
         this.imu.resetYaw();
@@ -541,7 +586,10 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
             handleMotorPower();
 
-            try {Thread.sleep(DELAY);} catch (InterruptedException e) {}
+            try {
+                Thread.sleep(DELAY);
+            } catch (InterruptedException e) {
+            }
         }
 
         drive(0.0);
@@ -549,22 +597,26 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        try {Thread.sleep(50);} catch (InterruptedException e) {}
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+        }
     }
-    public void fastTurn(int deg){
+
+    public void fastTurn(int deg) {
         //a faster(but less accurate) version of the turn function
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        
-        
+
+
         this.imu.resetYaw();
         double pos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
 
         //get within 15 degrees of target
-        while(Math.abs(deg - pos) > 15){
+        while (Math.abs(deg - pos) > 15) {
             pos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
 
-            if (deg - pos >= 0){
+            if (deg - pos >= 0) {
                 flDrivePower = 0.8;
                 frDrivePower = -0.8;
                 brDrivePower = -0.8;
@@ -584,6 +636,7 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         turn(deg - pos);
 
     }
+
     public void turnToFromHere(double target) {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -625,7 +678,12 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
-    public void donut(){
+public void intakeOn(int time){
+        intakePower = 1.0;
+        intakeDebounce.reset();
+        intakeMax = time;
+}
+    public void donut() {
 
         double strafe = 1.0;
         double turn = 0.25;
@@ -635,11 +693,20 @@ frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         blDrivePower = (-strafe + turn);
         brDrivePower = (strafe - turn);
 
-        for(int i = 200; i >= 0; i--){
+        for (int i = 200; i >= 0; i--) {
             handleMotorPower();
             sleep(25);
         }
 
     }
+
+
+
+
+
+
+
+
+
 
 }
