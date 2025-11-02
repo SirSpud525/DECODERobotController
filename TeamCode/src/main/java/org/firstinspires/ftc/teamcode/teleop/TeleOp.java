@@ -1,13 +1,14 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.teamcode.MashedPotatoRobot;
+
+import org.firstinspires.ftc.teamcode.Robot;
 
 @TeleOp(name = "DECODETeleOp", group = "TeleOp")
 public class DECODETeleOp extends OpMode{
 
-MashedPotatoRobot robot = new MashedPotatoRobot();
+Robot robot = new Robot();
     @Override
     public void init() {
         robot.init(hardwareMap);
