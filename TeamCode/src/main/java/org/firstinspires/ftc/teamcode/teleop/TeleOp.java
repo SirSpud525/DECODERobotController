@@ -1,14 +1,14 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Robot;
 
-@TeleOp(name = "DECODETeleOp", group = "TeleOp")
-public class DECODETeleOp extends OpMode{
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "TeleOp", group = "TeleOp")
+public class TeleOp extends OpMode {
 
-Robot robot = new Robot();
+    Robot robot = new Robot(telemetry);
+
     @Override
     public void init() {
         robot.init(hardwareMap);
@@ -16,8 +16,6 @@ Robot robot = new Robot();
 
     @Override
     public void loop() {
-        robot.gamePadPower(gamepad1, gamepad2, telemetry);
+        robot.gamePadPower(gamepad1, gamepad2);
     }
-
-
 }

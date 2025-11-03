@@ -15,79 +15,81 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.robotcore.internal.ftdi.eeprom.FT_EE_232A_Ctrl;
 
 
-public class MashedPotatoRobot {
+public class Robot {
+    Telemetry telemetry;
 
-//GLOBAL VARIABLES AND INIT
-
-    final String robotName = "Potato";
-    public ElapsedTime driveModeDebounce = new ElapsedTime();
-    private ElapsedTime pushUpDebounce = new ElapsedTime();
-    private ElapsedTime intakeDebounce = new ElapsedTime();
+    private ElapsedTime driveModeDebounce = new ElapsedTime();
     public double flDrivePower;
     public double frDrivePower;
     public double brDrivePower;
     public double blDrivePower;
-    public double slide1Power;
-    public double slide2Power;
+    public double driveSlowdown = 2;
+    public DriveMode driveMode = DriveMode.NORMAL;
+    private DcMotor flDrive;
+    private DcMotor frDrive;
+    private DcMotor blDrive;
+    private DcMotor brDrive;
+
+    public double slidePower;
+    private DcMotor leftSlide;
+    private DcMotor rightSlide;
+
     public double intakePower;
-    public boolean gyroDrive = true;
-    public boolean pushing = false;
-    public int intakeMax;
-    private DcMotor frontLeft;
-    private DcMotor frontRight;
-    private DcMotor backLeft;
-    private DcMotor backRight;
-    private DcMotor slide1;
-    private DcMotor slide2;
-    private DcMotor shootMotor;
     private DcMotor intake;
+
+    public double shootPower;
+    private DcMotor shoot;
+
+    private ElapsedTime lockDebounce = new ElapsedTime();
+    public boolean locked = false;
+
     public IMU imu;
-    public GoBildaPinpointDriver odo;
+    public GoBildaPinpointDriver odometry;
 
-    //potato
-    //mashed potatoes
-    //var
-    //12345betA
+    public Robot(Telemetry telemetry) {
+        this.telemetry = telemetry;
+    }
 
-    public void init(final HardwareMap hardwareMap) {
-        // Initialize hardware map - declares code version of physical motors using the driver/control hub
-        //frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); //3
-        //frontRight = hardwareMap.get(DcMotor.class, "frontRight"); //2
-        //backLeft = hardwareMap.get(DcMotor.class, "backLeft"); //0
-        //backRight = hardwareMap.get(DcMotor.class, "backRight"); //1
-//        slide1 = hardwareMap.get(DcMotor.class, "slide1");
-//        slide2 = hardwareMap.get(DcMotor.class, "slide2");
-        shootMotor = hardwareMap.get(DcMotor.class, "shoot");
+    public void init(HardwareMap hardwareMap) {
+        // Initialize hardware map - declares code version of physical motors as mapped in the driver hub
+        flDrive = hardwareMap.get(DcMotor.class, "flDrive"); // Port
+        frDrive = hardwareMap.get(DcMotor.class, "frDrive"); // Port
+        blDrive = hardwareMap.get(DcMotor.class, "blDrive"); // Port
+        brDrive = hardwareMap.get(DcMotor.class, "brDrive"); // Port
+        leftSlide = hardwareMap.get(DcMotor.class, "leftSlide"); // Port
+        rightSlide = hardwareMap.get(DcMotor.class, "rightSlide"); // Port
+        intake = hardwareMap.get(DcMotor.class, "intake"); // Port
+        shoot = hardwareMap.get(DcMotor.class, "shoot"); // Port
 
-        // Set reverse motors
-//        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
-//        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        shootMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        // Reverse motors
+        brDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+        frDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+        shoot.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        //encoders
-//        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//
-//        frontLeft.setTargetPosition(0);
-//        backLeft.setTargetPosition(0);
-//        backRight.setTargetPosition(0);
-//        frontRight.setTargetPosition(0);
+        // Reset all motors
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        //zero power behavior
-//        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-//        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-//        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-//        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-//        slide1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-//        slide2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        shootMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        // Brake motors when they have zero power
+        flDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        blDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        brDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Set up the IMU (gyro/angle sensor)
         IMU.Parameters imuParameters = new IMU.Parameters(
@@ -112,318 +114,302 @@ public class MashedPotatoRobot {
         //odo.setPosition(new Pose2D(DistanceUnit.MM, -923.925, 1601.47, RADIANS, 0));
     }
 
-    //UTILITY FUNCTIONS
+    public void be(int waitAfter) {
+        be();
 
-    public void handleMotorPower() {
+        // Wait (to allow the action done to be performed)
+        sleep(waitAfter);
+    }
 
-        frontLeft.setPower(flDrivePower);
-        frontRight.setPower(frDrivePower);
-        backLeft.setPower(blDrivePower);
-        backRight.setPower(brDrivePower);
+    public void be() {
+        flDrive.setPower(flDrivePower / driveSlowdown);
+        frDrive.setPower(frDrivePower / driveSlowdown);
+        blDrive.setPower(blDrivePower / driveSlowdown);
+        brDrive.setPower(brDrivePower / driveSlowdown);
 
-        if(intakeDebounce.milliseconds() > intakeMax)
-        {
-            intake.setPower(0);
+        leftSlide.setPower(slidePower);
+        rightSlide.setPower(slidePower);
+
+        intake.setPower(intakePower);
+
+        shoot.setPower(shootPower);
+    }
+
+    public void what() {
+        telemetry.addData("FL Drive Power: ", flDrivePower);
+        telemetry.addData("FR Drive Power: ", frDrivePower);
+        telemetry.addData("BL Drive Power: ", blDrivePower);
+        telemetry.addData("BR Drive Power: ", brDrivePower);
+        telemetry.addData("Drive Slowdown: ", driveSlowdown);
+        telemetry.addData("Drive Mode: ", driveMode);
+        telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        telemetry.addData("Slide Power: ", slidePower);
+        telemetry.addData("Intake Power: ", intakePower);
+        telemetry.addData("Shoot Power: ", shootPower);
+
+        telemetry.update();
+    }
+
+    public void gamePadPower(Gamepad gp1, Gamepad gp2) {
+        setLock(gp2);
+
+        if (locked) {
+            mainDrive(0, 0, 0, 1, 1);
+            slideControl(-0.2);
+            intakeControl(0.0);
+            shootControl(0.0);
+        } else {
+            setDrivingMode(gp1);
+
+            if (driveMode == DriveMode.NORMAL) {
+                mainDrive(gp1);
+            } else {
+                mainGyroDrive(gp1);
+            }
+
+            slideControl(gp2);
+            intakeControl(gp2);
+            shootControl(gp2);
         }
-        else
-        {
-            intake.setPower(1);
-        }
+
+        // Update state
+        be();
+
+        // Update telemetry
+        what();
     }
 
-    public void brake() {
-        flDrivePower = 0.0;
-        blDrivePower = 0.0;
-        frDrivePower = 0.0;
-        brDrivePower = 0.0;
-
-        frontLeft.setPower(0.0);
-        backLeft.setPower(0.0);
-        frontRight.setPower(0.0);
-        backRight.setPower(0.0);
-    }
-
-    public void sleep(int milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException ignored) {
-        }
-    }
-
-    public double distToAngle() {
-        //Gives an angle based on distance to land the artifact in the basket
-        double x = odo.getPosX(DistanceUnit.MM);
-        double y = odo.getPosY(DistanceUnit.MM);
-        double dist = Math.sqrt(x * x + y * y);
-        double v0 = (2 * 125 * 0.02) / (0.075); //initial velocity
-        double constant = 9.8 / v0;
-        double height = 0.9845;
-        double discriminant = 1 - dist * dist * constant * constant - 2 * height * constant;
-        double theta = Math.atan(v0 * (1 + Math.sqrt(discriminant)) / (9.8 * dist));
-        return theta; //Returns angle
-    }
-
-    public double distToVelocity(double theta) {
-        //Given theta (The angle at which the artifact shoots at) return the velocity needed to reach the basket
-        double x = odo.getPosX(DistanceUnit.MM);
-        double y = odo.getPosY(DistanceUnit.MM);
-        double dist = Math.sqrt(x * x + y * y);
-        double secant = 1 / Math.cos(Math.toRadians(theta));
-        double numerator = -9.8 * dist * dist;
-        double denominator = 2 * (.9845 - dist * Math.tan(Math.toRadians(theta)));
-        return secant * Math.sqrt(numerator / denominator);
-    }
-
-    private void setDriveMode(final DcMotor.RunMode mode) {
-        frontLeft.setMode(mode);
-        frontRight.setMode(mode);
-        backLeft.setMode(mode);
-        backRight.setMode(mode);
-    }
-
-    public void drive(final double pow) {
-        //Sets all motors to pow
-        frontLeft.setPower(pow);
-        backLeft.setPower(pow);
-        frontRight.setPower(pow);
-        backRight.setPower(pow);
-    }
-
-    //TELEOP FUNCTIONS
-
-    public void gamePadPower(Gamepad gp1, Gamepad gp2, Telemetry telemetry) {
-//        if (gyroDrive) {
-//            gyroDrive(gp1, telemetry);
-//        } else {
-//            Driving(gp1, telemetry);
-//        }
-//        toggleGyro(gp1);
-//            pushUp(gp2);
-        shooting(gp2);
-    }
-
-    public void toggleGyro(Gamepad gp1) {
-        //Toggles gyro on or off
-
-        //toggles GyroDrive boolean
-        if (gp1.x) {
+    public void setDrivingMode(Gamepad gp) {
+        if (gp.x) {
             if (driveModeDebounce.milliseconds() < 500) return;
+
             driveModeDebounce.reset();
 
-            gyroDrive = !gyroDrive;
+            if (driveMode == DriveMode.NORMAL) {
+                setDrivingMode(DriveMode.GYRO);
+            } else {
+                setDrivingMode(DriveMode.NORMAL);
+            }
         }
     }
 
-    public void pushUp(Gamepad gp2) {
-        if (gp2.x) {
-            if (pushUpDebounce.milliseconds() < 500) return;
+    public void setDrivingMode(DriveMode mode) {
+        driveMode = mode;
+    }
 
-            pushUpDebounce.reset();
-            pushing = !pushing;
-        }
+    public void mainDrive(Gamepad gp) {
+        double drive = -gp.left_stick_y;
+        double turn = gp.right_stick_x;
+        double strafe = gp.left_stick_x;
+        double slowDownFactor = gp.right_trigger;
+        double speedUpFactor = gp.left_trigger;
 
-        if (pushing) {
-            slide1.setPower(0.1);
-            slide2.setPower(0.1);
+        mainDrive(drive, turn, strafe, slowDownFactor, speedUpFactor);
+    }
+
+    public void mainDrive(double drive, double turn, double strafe, double slowDownFactor, double speedUpFactor) {
+        flDrivePower = drive + strafe + turn;
+        frDrivePower = drive - strafe - turn;
+        blDrivePower = drive - strafe + turn;
+        brDrivePower = drive + strafe - turn;
+
+        if (slowDownFactor > 0.5 && speedUpFactor > 0.5) {
+            driveSlowdown = 2;
+        } else if (slowDownFactor > 0.5) {
+            driveSlowdown = 4;
+        } else if (speedUpFactor > 0.5) {
+            driveSlowdown = 1;
         } else {
-            slide1.setPower(0.0);
-            slide2.setPower(0.0);
-        }
-
-    }
-    public void shooting(Gamepad gp2){
-        double sign = Math.signum(gp2.right_trigger);
-        if (sign == 1){
-            shootMotor.setPower(1.0);
-        } else {
-            shootMotor.setPower(0.0);
+            driveSlowdown = 2;
         }
     }
-    public void Driving(Gamepad gp1, Telemetry telemetry) {
-        //uses driver input to speedup/slowdown as needed
-        double multiplier = Math.max(0.3, 1 - gp1.right_trigger);
-        double speedMode = (gp1.left_trigger);
 
-        //gets joystick input
-        double slowdown = 1.5;
-        final double drive = (-gp1.left_stick_y);
-        final double turn = (gp1.right_stick_x);
-        final double strafe = (gp1.left_stick_x);
+    public void mainGyroDrive(Gamepad gp) {
+        double drive = -gp.left_stick_y;
+        double turn = gp.right_stick_x;
+        double strafe = gp.left_stick_x;
+        double slowDownFactor = gp.right_trigger;
+        double speedUpFactor = gp.left_trigger;
 
-        //math to determine power - uses mecanum wheel equation
-        flDrivePower = (drive + strafe + turn);
-        frDrivePower = (drive - strafe - turn);
-        blDrivePower = (drive - strafe + turn);
-        brDrivePower = (drive + strafe - turn);
-
-        telemetry.addData("IMU-X", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).firstAngle);
-        telemetry.addData("IMU-Y", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).secondAngle);
-        telemetry.addData("IMU-Z", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).thirdAngle);
-
-        double imuPos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
-        telemetry.addData("IMU-Angle", imuPos);
-        telemetry.update();
-
-        if (speedMode > 0.1) {
-            slowdown = 1;
-        }
-
-        //factor in slowdown and speedup
-        frontLeft.setPower(flDrivePower * multiplier / slowdown);
-        frontRight.setPower(frDrivePower * multiplier / slowdown);
-        backLeft.setPower(blDrivePower * multiplier / slowdown);
-        backRight.setPower(brDrivePower * multiplier / slowdown);
-    }
-
-    public void gyroDrive(Gamepad gp1, Telemetry telemetry) {
-        //gyro driving function
-        //IMU setup
-        telemetry.addData("IMU-X", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).firstAngle);
-        telemetry.addData("IMU-Y", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).secondAngle);
-        telemetry.addData("IMU-Z", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).thirdAngle);
-
-        //reset button - zeroes the gyro
-        if (gp1.y == true) {
+        if (gp.a) {
             imu.resetYaw();
         }
 
-        //get IMU
-        double imuPos = (imu.getRobotYawPitchRollAngles().getYaw(RADIANS));
-        telemetry.addData("IMU-Angle", imuPos);
+        mainGyroDrive(drive, turn, strafe, slowDownFactor, speedUpFactor);
+    }
 
-        //math - uses trig functions to find the power for each motor
-        double change = Math.cos(-imuPos);
+    public void mainGyroDrive(double drive, double turn, double strafe, double slowDownFactor, double speedUpFactor) {
+        double imuPos = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
+        double cosine = Math.cos(-imuPos);
         double sine = Math.sin(-imuPos);
 
-        double drive = (-gp1.left_stick_y);
-        double strafe = (gp1.left_stick_x);
-        double turn = (gp1.right_stick_x);
-
-        double driveCos = change * drive;
+        double driveCos = cosine * drive;
         double driveSin = sine * drive;
+        double strafeCos = cosine * strafe;
         double strafeSin = sine * strafe;
-        double strafeCos = change * strafe;
 
-        //divided by 1.5 is to account for strafing being slower than driving forward
         double actualDrive = (driveCos + strafeSin) / 1.5;
-        double actualStrafe = -driveSin + strafeCos;
+        double actualStrafe = strafeCos - driveSin;
 
-        //set power
-        flDrivePower = (actualDrive + actualStrafe + turn);
-        frDrivePower = (actualDrive - actualStrafe - turn);
-        blDrivePower = (actualDrive - actualStrafe + turn);
-        brDrivePower = (actualDrive + actualStrafe - turn);
-
-        double slowdown = 0.85;
-
-        //adds or removes to speed based on user input
-        if (gp1.right_trigger >= 0.1) {
-            slowdown = 0.25;
-        } else if (gp1.left_trigger >= 0.1) {
-            slowdown = 1.25;
-        }
-
-        frontLeft.setPower(flDrivePower * slowdown);
-        frontRight.setPower(frDrivePower * slowdown);
-        backLeft.setPower(blDrivePower * slowdown);
-        backRight.setPower(brDrivePower * slowdown);
-
+        mainDrive(actualDrive, turn, actualStrafe, slowDownFactor, speedUpFactor);
     }
 
-    //AUTO FUNCTIONS
+    public void slideControl(Gamepad gp) {
+        boolean contract = gp.left_bumper && !gp.right_bumper;
+        boolean extend = gp.right_bumper && !gp.left_bumper;
 
-    private void enableAllMotors(final double p1, final double p2) {
-        //abstraction, sets power to the TL & BR motors for p1, and TR & BL motors for p2
-        frDrivePower = p2;
-        brDrivePower = p1;
-        flDrivePower = p1;
-        blDrivePower = p2;
-    }
-
-    public void angularStrafe(int degrees, int distance) {
-        //Strafes the robot distance in "degrees" direction
-
-        //changes here should be fine, but the commented old version stays until it's tested, then delete it
-        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        double xDist = 1000;
-        double yDist = 1000;
-        final double error = 100;
-        final double slowdown = 1.8;
-
-        while (Math.abs(yDist - frontRight.getCurrentPosition()) > error || Math.abs(xDist - frontLeft.getCurrentPosition()) > error) {
-
-            double Pitch = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES); //makes sure that it strafes relative to the starting IMU pos
-            double angleInRadians = Math.toRadians(degrees + 315 - Pitch); //0 deg, would strafe right, 90 deg would strafe up, etc.
-            double cosValue = Math.cos(angleInRadians);
-            double sinValue = Math.sin(angleInRadians);
-            yDist = distance * sinValue;
-            xDist = distance * cosValue;
-
-            double x = cosValue;
-            double y = sinValue;
-
-            enableAllMotors(x / slowdown, y / slowdown);
-            handleMotorPower();
-        }
-        drive(0.0);
-
-    }
-
-    public void strafe(int pos) {
-        //strafes the robot left and right
-        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        int flBrPos = pos;
-        int frBlPos = -pos;
-        double extra = 0.1;
-        final double tickDistance = 40;
-
-        if (pos > 0) {
-            extra = 0.1;
+        if (contract) {
+            slideControl(1.0);
+        } else if (extend) {
+            slideControl(-1.0);
         } else {
-            extra = -0.1;
-        }
-
-        while (Math.abs(flBrPos - backRight.getCurrentPosition()) > tickDistance || Math.abs(flBrPos - frontLeft.getCurrentPosition()) > tickDistance) {
-            int flDistance = flBrPos - frontLeft.getCurrentPosition();
-            int frDistance = frBlPos - frontRight.getCurrentPosition();
-            int blDistance = frBlPos - backLeft.getCurrentPosition();
-            int brDistance = flBrPos - backRight.getCurrentPosition();
-
-            flDrivePower = (double) flDistance / (double) Math.abs(flBrPos);
-            blDrivePower = (double) blDistance / (double) Math.abs(frBlPos);
-            frDrivePower = (double) frDistance / (double) Math.abs(frBlPos);
-            brDrivePower = (double) brDistance / (double) Math.abs(flBrPos);
-
-            flDrivePower = flDrivePower / 2 + extra;
-            frDrivePower = frDrivePower / 2 - extra;
-            blDrivePower = blDrivePower / 2 - extra;
-            brDrivePower = brDrivePower / 2 + extra;
-
-            handleMotorPower();
-
-        }
-
-        drive(0.0);
-
-        try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
+            slideControl(0.0);
         }
     }
 
-    public void accurateStrafe(int pos) {
+    public void slideControl(double power) {
+        if ((power < 0 && leftSlide.getCurrentPosition() > -2140) || (power > 0 && leftSlide.getCurrentPosition() < 0)) {
+            slideControl(power);
+        } else {
+            slideControl(0.0);
+        }
+        
+        double shiftedPower = power + 0.2; // some contractive power always necessary
+
+        slidePower = Math.min(Math.max(shiftedPower, -1.0), 1.0); // clamp between -1 to 1
+    }
+
+    public void intakeControl(Gamepad gp) {
+        if (gp.a) {
+            intakeControl(1.0);
+        } else {
+            intakeControl(0.0);
+        }
+    }
+
+    public void intakeControl(double power) {
+        intakePower = power;
+    }
+
+    public void shootControl(Gamepad gp) {
+        shootControl(gp.right_trigger - gp.left_trigger);
+    }
+
+    public void shootControl(double power) {
+        shootPower = power;
+    }
+
+    public void setLock(Gamepad gp) {
+        if (gp.y) {
+            if (lockDebounce.milliseconds() < 500) return;
+
+            lockDebounce.reset();
+
+            locked = !locked;
+        }
+    }
+
+    public void driveTo(int pos) {
+        if (pos == 0) return;
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        brake();
+
+        final int DELAY = 20;
+
+        while ((Math.abs(pos - flDrive.getCurrentPosition()) + Math.abs(pos - frDrive.getCurrentPosition()) / 2) > 20) {
+            // Drive
+            int flDistance = pos - flDrive.getCurrentPosition();
+            int frDistance = pos - frDrive.getCurrentPosition();
+            int blDistance = pos - blDrive.getCurrentPosition();
+            int brDistance = pos - brDrive.getCurrentPosition();
+
+            flDrivePower = (double) flDistance / (double) Math.abs(pos);
+            blDrivePower = (double) blDistance / (double) Math.abs(pos);
+            frDrivePower = (double) frDistance / (double) Math.abs(pos);
+            brDrivePower = (double) brDistance / (double) Math.abs(pos);
+
+            if (Math.abs(pos - flDrive.getCurrentPosition()) > 150 && Math.abs(pos - frDrive.getCurrentPosition()) > 150) {
+                flDrivePower = Math.signum(flDrivePower) * 0.9;
+                frDrivePower = Math.signum(frDrivePower) * 0.9;
+                blDrivePower = Math.signum(blDrivePower) * 0.9;
+                brDrivePower = Math.signum(brDrivePower) * 0.9;
+            } else {
+                flDrivePower = (flDrivePower) + (Math.signum(flDrivePower) * 0.1);
+                frDrivePower = (frDrivePower) + (Math.signum(frDrivePower) * 0.1);
+                blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.1);
+                brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.1);
+            }
+
+            // Slowdown
+            flDrivePower = flDrivePower * driveSlowdown;
+            frDrivePower = frDrivePower * driveSlowdown;
+            blDrivePower = blDrivePower * driveSlowdown;
+            brDrivePower = brDrivePower * driveSlowdown;
+
+            be();
+
+            sleep(DELAY);
+        }
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    public void driveTo(int pos, double slowdown) {
+        if (pos == 0) return;
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        brake();
+
+        final int DELAY = 20;
+
+        while (((Math.abs(pos - flDrive.getCurrentPosition()) + Math.abs(pos - frDrive.getCurrentPosition())) / 2) > 20) {
+            // Drive
+            int flDistance = pos - flDrive.getCurrentPosition();
+            int frDistance = pos - frDrive.getCurrentPosition();
+            int blDistance = pos - blDrive.getCurrentPosition();
+            int brDistance = pos - brDrive.getCurrentPosition();
+
+            flDrivePower = (double) flDistance / (double) Math.abs(pos);
+            blDrivePower = (double) blDistance / (double) Math.abs(pos);
+            frDrivePower = (double) frDistance / (double) Math.abs(pos);
+            brDrivePower = (double) brDistance / (double) Math.abs(pos);
+
+            flDrivePower = (flDrivePower / slowdown) + (Math.signum(flDrivePower) * 0.1);
+            frDrivePower = (frDrivePower / slowdown) + (Math.signum(frDrivePower) * 0.1);
+            blDrivePower = (blDrivePower / slowdown) + (Math.signum(blDrivePower) * 0.1);
+            brDrivePower = (brDrivePower / slowdown) + (Math.signum(brDrivePower) * 0.1);
+
+            // Slowdown
+            flDrivePower = flDrivePower * driveSlowdown;
+            frDrivePower = frDrivePower * driveSlowdown;
+            blDrivePower = blDrivePower * driveSlowdown;
+            brDrivePower = brDrivePower * driveSlowdown;
+
+            be();
+
+            sleep(DELAY);
+        }
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    public void strafeTo(int pos) {
         double targetAngle = 0;
 
         double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
@@ -441,18 +427,18 @@ public class MashedPotatoRobot {
         int flBrPos = pos;
         int frBlPos = -pos;
 
-        while (Math.abs((Math.abs(flBrPos - frontLeft.getCurrentPosition()) + Math.abs(frBlPos - frontRight.getCurrentPosition())) / 2) > 20) {
-            int flDistance = flBrPos - frontLeft.getCurrentPosition();
-            int frDistance = frBlPos - frontRight.getCurrentPosition();
-            int blDistance = frBlPos - backLeft.getCurrentPosition();
-            int brDistance = flBrPos - backRight.getCurrentPosition();
+        while (Math.abs((Math.abs(flBrPos - flDrive.getCurrentPosition()) + Math.abs(frBlPos - frDrive.getCurrentPosition())) / 2) > 20) {
+            int flDistance = flBrPos - flDrive.getCurrentPosition();
+            int frDistance = frBlPos - frDrive.getCurrentPosition();
+            int blDistance = frBlPos - blDrive.getCurrentPosition();
+            int brDistance = flBrPos - brDrive.getCurrentPosition();
 
             flDrivePower = (double) flDistance / (double) Math.abs(flBrPos);
             blDrivePower = (double) blDistance / (double) Math.abs(frBlPos);
             frDrivePower = (double) frDistance / (double) Math.abs(frBlPos);
             brDrivePower = (double) brDistance / (double) Math.abs(flBrPos);
 
-            if (Math.abs(flBrPos - backRight.getCurrentPosition()) > 100 || Math.abs(flBrPos - frontLeft.getCurrentPosition()) > 100) {
+            if (Math.abs(flBrPos - brDrive.getCurrentPosition()) > 100 || Math.abs(flBrPos - flDrive.getCurrentPosition()) > 100) {
                 flDrivePower = Math.signum(flDrivePower);
                 frDrivePower = Math.signum(frDrivePower);
                 blDrivePower = Math.signum(blDrivePower);
@@ -489,9 +475,13 @@ public class MashedPotatoRobot {
             blDrivePower += blDrivePowerCorrection;
             brDrivePower += brDrivePowerCorrection;
 
-            // there was a slowdown here, I removed it cus not responsible, could be an issue later
+            // Slowdown
+            flDrivePower = flDrivePower * driveSlowdown;
+            frDrivePower = frDrivePower * driveSlowdown;
+            blDrivePower = blDrivePower * driveSlowdown;
+            brDrivePower = brDrivePower * driveSlowdown;
 
-            handleMotorPower();
+            be();
 
             sleep(DELAY);
         }
@@ -502,139 +492,80 @@ public class MashedPotatoRobot {
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    public void driveTo(final int pos) {
-        //Drives pos distance
-        if (pos == 0) return;
+    public void driveAndStrafe(int drivePos, int strafePos) {
+        double targetAngle = 0;
+
+        double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double errorAngle = targetAngle - currentAngle;
+
+        brake();
 
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        final int delay = 20;
-        final int THRESHOLD = 35;
-        double ADDITIONAL_SPEED;
+        brake();
 
-        if (pos >= 0) {
-            ADDITIONAL_SPEED = 0.1;
-        } else {
-            ADDITIONAL_SPEED = -0.1;
-        }
+        final int DELAY = 20;
 
-        while (Math.abs(pos - frontLeft.getCurrentPosition()) > THRESHOLD || Math.abs(pos - frontRight.getCurrentPosition()) > THRESHOLD) {
-            int flDistance = pos - frontLeft.getCurrentPosition();
-            int frDistance = pos - frontRight.getCurrentPosition();
-            int blDistance = pos - backLeft.getCurrentPosition();
-            int brDistance = pos - backRight.getCurrentPosition();
+        int flBrPos = (int) (1.5 * (double) strafePos + (double) drivePos);
+        int frBlPos = (int) (-1.5 * (double) strafePos + (double) drivePos);
 
-            ADDITIONAL_SPEED = (flDistance / Math.abs(flDistance)) * 0.1;
+        while (Math.abs((Math.abs(flBrPos - flDrive.getCurrentPosition()) + Math.abs(frBlPos - frDrive.getCurrentPosition())) / 2) > 15) {
+            int flDistance = flBrPos - flDrive.getCurrentPosition();
+            int frDistance = frBlPos - frDrive.getCurrentPosition();
+            int blDistance = frBlPos - blDrive.getCurrentPosition();
+            int brDistance = flBrPos - brDrive.getCurrentPosition();
 
+            flDrivePower = (double) flDistance / (double) Math.abs(flBrPos);
+            blDrivePower = (double) blDistance / (double) Math.abs(frBlPos);
+            frDrivePower = (double) frDistance / (double) Math.abs(frBlPos);
+            brDrivePower = (double) brDistance / (double) Math.abs(flBrPos);
 
-            flDrivePower = (double) flDistance / (double) Math.abs(pos);
-            blDrivePower = (double) blDistance / (double) Math.abs(pos);
-            frDrivePower = (double) frDistance / (double) Math.abs(pos);
-            brDrivePower = (double) brDistance / (double) Math.abs(pos);
+            flDrivePower = (flDrivePower) + (Math.signum(flDrivePower) * 0.15);
+            frDrivePower = (frDrivePower) + (Math.signum(frDrivePower) * 0.15);
+            blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.15);
+            brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.15);
 
-            flDrivePower = flDrivePower / 3 + ADDITIONAL_SPEED;
-            frDrivePower = frDrivePower / 3 + ADDITIONAL_SPEED;
-            blDrivePower = blDrivePower / 3 + ADDITIONAL_SPEED;
-            brDrivePower = brDrivePower / 3 + ADDITIONAL_SPEED;
+            // Correct angle
+            currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            errorAngle = targetAngle - currentAngle;
 
-            handleMotorPower();
+            double kp = 1;
 
-            try {
-                Thread.sleep(delay);
-            } catch (InterruptedException e) {
-            }
-        }
-
-        drive(0.0);
-    }
-
-    public void turn(double target) {
-        //Target is how many degrees, turns slowly but accurately
-        this.imu.resetYaw();
-
-        if (target == 0) return;
-
-        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        double currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
-        double error = target - currentPosition;
-
-        double kp = 1;
-
-        final int DELAY = 50;
-
-        while (Math.abs(error) > 2) {
-            currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
-            error = target - currentPosition;
-
-            double proportional = error * kp;
+            double proportional = errorAngle * kp;
 
             double turn = proportional / (180 * kp);
-            final double mult = 2.4;
 
-            flDrivePower = -turn * mult;
-            frDrivePower = turn * mult;
-            blDrivePower = -turn * mult;
-            brDrivePower = turn * mult;
+            double flDrivePowerCorrection = -turn;
+            double frDrivePowerCorrection = turn;
+            double blDrivePowerCorrection = -turn;
+            double brDrivePowerCorrection = turn;
 
-            flDrivePower = flDrivePower / 2;
-            frDrivePower = frDrivePower / 2;
-            blDrivePower = blDrivePower / 2;
-            brDrivePower = brDrivePower / 2;
+            flDrivePowerCorrection = (flDrivePowerCorrection / 2) + (Math.signum(flDrivePowerCorrection) * 0.1);
+            frDrivePowerCorrection = (frDrivePowerCorrection / 2) + (Math.signum(frDrivePowerCorrection) * 0.1);
+            blDrivePowerCorrection = (blDrivePowerCorrection / 2) + (Math.signum(blDrivePowerCorrection) * 0.1);
+            brDrivePowerCorrection = (brDrivePowerCorrection / 2) + (Math.signum(brDrivePowerCorrection) * 0.1);
 
-            handleMotorPower();
+            flDrivePower += flDrivePowerCorrection;
+            frDrivePower += frDrivePowerCorrection;
+            blDrivePower += blDrivePowerCorrection;
+            brDrivePower += brDrivePowerCorrection;
 
-            try {
-                Thread.sleep(DELAY);
-            } catch (InterruptedException e) {
-            }
+            // Slowdown
+            flDrivePower = flDrivePower * driveSlowdown;
+            frDrivePower = frDrivePower * driveSlowdown;
+            blDrivePower = blDrivePower * driveSlowdown;
+            brDrivePower = brDrivePower * driveSlowdown;
+
+            be();
+
+            sleep(DELAY);
         }
 
-        drive(0.0);
+        brake();
 
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-        }
-    }
-
-    public void fastTurn(int deg) {
-        //a faster(but less accurate) version of the turn function
-        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-
-        this.imu.resetYaw();
-        double pos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
-
-        //get within 15 degrees of target
-        while (Math.abs(deg - pos) > 15) {
-            pos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
-
-            if (deg - pos >= 0) {
-                flDrivePower = 0.8;
-                frDrivePower = -0.8;
-                brDrivePower = -0.8;
-                blDrivePower = 0.8;
-            } else {
-                flDrivePower = -0.8;
-                frDrivePower = 0.8;
-                brDrivePower = 0.8;
-                blDrivePower = -0.8;
-            }
-
-            handleMotorPower();
-
-        }
-
-        //finishing turning with the more accurate function
-        turn(deg - pos);
-
     }
 
     public void turnToFromHere(double target) {
@@ -666,9 +597,12 @@ public class MashedPotatoRobot {
             blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.1);
             brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.1);
 
-            //removed slowdown stuff
+            flDrivePower = flDrivePower * driveSlowdown;
+            frDrivePower = frDrivePower * driveSlowdown;
+            blDrivePower = blDrivePower * driveSlowdown;
+            brDrivePower = brDrivePower * driveSlowdown;
 
-            handleMotorPower();
+            be();
 
             sleep(DELAY);
         }
@@ -678,35 +612,101 @@ public class MashedPotatoRobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
-public void intakeOn(int time){
-        intakePower = 1.0;
-        intakeDebounce.reset();
-        intakeMax = time;
-}
-    public void donut() {
 
-        double strafe = 1.0;
-        double turn = 0.25;
+    public void turnTo(double target) {
+        this.imu.resetYaw();
 
-        flDrivePower = (strafe + turn);
-        frDrivePower = (-strafe - turn);
-        blDrivePower = (-strafe + turn);
-        brDrivePower = (strafe - turn);
+        if (target == 0) return;
 
-        for (int i = 200; i >= 0; i--) {
-            handleMotorPower();
-            sleep(25);
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        double currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double error = target - currentPosition;
+
+        double kp = 1;
+
+        final int DELAY = 50;
+
+        while (Math.abs(error) > 1) {
+            currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            error = target - currentPosition;
+
+            double proportional = error * kp;
+
+            double turn = proportional / (180 * kp);
+
+            flDrivePower = -turn;
+            frDrivePower = turn;
+            blDrivePower = -turn;
+            brDrivePower = turn;
+
+            flDrivePower = (flDrivePower) + (Math.signum(flDrivePower) * 0.1);
+            frDrivePower = (frDrivePower) + (Math.signum(frDrivePower) * 0.1);
+            blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.1);
+            brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.1);
+
+            flDrivePower = flDrivePower * driveSlowdown;
+            frDrivePower = frDrivePower * driveSlowdown;
+            blDrivePower = blDrivePower * driveSlowdown;
+            brDrivePower = brDrivePower * driveSlowdown;
+
+            be();
+
+            sleep(DELAY);
         }
 
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        this.imu.resetYaw();
+    }
+
+    private void setDriveMode(DcMotor.RunMode mode) {
+        flDrive.setMode(mode);
+        frDrive.setMode(mode);
+        blDrive.setMode(mode);
+        brDrive.setMode(mode);
+    }
+
+    public void resetGyro() {
+        this.imu.resetYaw();
+    }
+
+    public void brake() {
+        flDrivePower = 0.0;
+        blDrivePower = 0.0;
+        frDrivePower = 0.0;
+        brDrivePower = 0.0;
+
+        flDrive.setPower(0.0);
+        blDrive.setPower(0.0);
+        frDrive.setPower(0.0);
+        brDrive.setPower(0.0);
+    }
+
+    public void sleep(int milliseconds) {
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException _ignored) {}
     }
 
 
+    public double distToVelocity(double theta) {
+        //Given theta (The angle at which the artifact shoots at) return the velocity needed to reach the basket
+        double x = odometry.getPosX(DistanceUnit.MM);
+        double y = odometry.getPosY(DistanceUnit.MM);
+        double dist = Math.sqrt(x * x + y * y);
+        double secant = 1 / Math.cos(Math.toRadians(theta));
+        double numerator = -9.8 * dist * dist;
+        double denominator = 2 * (.9845 - dist * Math.tan(Math.toRadians(theta)));
+        return secant * Math.sqrt(numerator / denominator);
+    }
+}
 
-
-
-
-
-
-
-
+enum DriveMode {
+    NORMAL,
+    GYRO
 }

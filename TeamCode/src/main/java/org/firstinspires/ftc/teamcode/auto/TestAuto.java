@@ -1,13 +1,15 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.auto;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.utils.Camera;
+import org.firstinspires.ftc.teamcode.Robot;
 
 @Autonomous(name = "TestAuto", group = "Auto")
 public class TestAuto extends LinearOpMode{
 
-MashedPotatoRobot robot = new MashedPotatoRobot();
+Robot robot = new Robot(telemetry);
 
 Camera camera;
 
@@ -18,11 +20,9 @@ Camera camera;
         camera = new Camera(hardwareMap.get(WebcamName.class, "Webcam 1"));
 
         waitForStart();
-        //code here
-        robot.donut();
 
-        robot.sleep(1000);
-        //code ends
+
+
         stop();
     }
 
