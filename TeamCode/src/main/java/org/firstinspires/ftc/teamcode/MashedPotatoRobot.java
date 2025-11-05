@@ -6,6 +6,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADI
 import com.qualcomm.hardware.bosch.BHI260IMU;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -36,6 +37,10 @@ public class MashedPotatoRobot {
     public double slideRightPower;
     public double shootPower;
     public double intakePower;
+    public double upLeftPower;
+    public double upRightPower;
+    public double lowLeftPower;
+    public double lowRightPower;
     public boolean gyroDrive = true;
     public boolean pushing = false;
     public boolean locked = false;
@@ -47,6 +52,10 @@ public class MashedPotatoRobot {
     private DcMotor slideRight;
     private DcMotor shootMotor;
     private DcMotor intake;
+    private CRServo upLowerRight;
+    private CRServo upLowerLeft;
+    private CRServo upUpperRight;
+    private CRServo upUpperLeft;
     public IMU imu;
     public GoBildaPinpointDriver odo;
 
@@ -65,6 +74,10 @@ public class MashedPotatoRobot {
         slideRight = hardwareMap.get(DcMotor.class, "slideRight");
         shootMotor = hardwareMap.get(DcMotor.class, "shoot");
         intake = hardwareMap.get(DcMotor.class, "intake");
+        upLowerLeft = hardwareMap.get(CRServo.class, "upLowerLeft");
+        upLowerRight = hardwareMap.get(CRServo.class, "upLowerRight");
+        upUpperLeft = hardwareMap.get(CRServo.class, "upUpperLeft");
+        upUpperRight = hardwareMap.get(CRServo.class, "upUpperRight");
 
         // Set reverse motors
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -258,6 +271,27 @@ public class MashedPotatoRobot {
             shootMotor.setPower(0.0);
         }
     }
+    public void lowerIntake(Gamepad gp2) {
+        //sets intake power when b is pressed
+        if (gp2.b == true) {
+            intake.setPower(1.0);
+        }
+        else {
+            intake.setPower(0);
+        }
+    }
+    //use 4 servos to move the artifacts
+    //upUpperRight
+    //upUpperLeft
+    //upLowerRight
+    //upLowerLeft
+    //all servos should move the artifact up when left stick is up and and down when left stick
+    //is down for now assume that 1.0 turns to the right, -1.0 to the left
+    public void intakeServos(Gamepad gp2) {
+        double currentInput = gp2.left_stick_y;
+
+    }
+
     public void Driving(Gamepad gp1, Telemetry telemetry) {
         //uses driver input to speedup/slowdown as needed
         double multiplier = Math.max(0.3, 1 - gp1.right_trigger);
