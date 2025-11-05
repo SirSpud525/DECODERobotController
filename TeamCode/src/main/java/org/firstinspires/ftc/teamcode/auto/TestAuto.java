@@ -4,14 +4,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.utils.Camera;
-import org.firstinspires.ftc.teamcode.Robot;
+import org.firstinspires.ftc.teamcode.DECODERobot;
 
 @Autonomous(name = "TestAuto", group = "Auto")
-public class TestAuto extends LinearOpMode{
+public class TestAuto extends LinearOpMode {
+    DECODERobot robot = new DECODERobot(telemetry);
 
-Robot robot = new Robot(telemetry);
-
-Camera camera;
+    Camera camera;
 
     public void runOpMode() throws InterruptedException {
 
@@ -21,9 +20,6 @@ Camera camera;
 
         waitForStart();
 
-
-
         stop();
     }
-
 }

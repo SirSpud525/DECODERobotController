@@ -1,11 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
-
 import com.qualcomm.hardware.bosch.BHI260IMU;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -18,10 +16,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 
-public class Robot {
+public class DECODERobot {
     Telemetry telemetry;
 
-    private ElapsedTime driveModeDebounce = new ElapsedTime();
+    private final ElapsedTime driveModeDebounce = new ElapsedTime();
     public double flDrivePower;
     public double frDrivePower;
     public double brDrivePower;
@@ -43,14 +41,20 @@ public class Robot {
     public double shootPower;
     private DcMotor shoot;
 
-    private ElapsedTime lockDebounce = new ElapsedTime();
+    public double spinnerPower = 0.0;
+    private CRServo tlSpinner;
+    private CRServo trSpinner;
+    private CRServo blSpinner;
+    private CRServo brSpinner;
+
+    private final ElapsedTime lockDebounce = new ElapsedTime();
     public boolean locked = false;
 
     public IMU imu;
     public GoBildaPinpointDriver odometry;
 
-    public Robot(Telemetry telemetry) {
-        this.telemetry = telemetry;
+    public DECODERobot(Telemetry robotTelemetry) {
+        telemetry = robotTelemetry;
     }
 
     public void init(HardwareMap hardwareMap) {
@@ -64,10 +68,17 @@ public class Robot {
         intake = hardwareMap.get(DcMotor.class, "intake"); // Port
         shoot = hardwareMap.get(DcMotor.class, "shoot"); // Port
 
+        tlSpinner = hardwareMap.get(CRServo.class, "tlSpinner");
+        trSpinner = hardwareMap.get(CRServo.class, "trSpinner");
+        blSpinner = hardwareMap.get(CRServo.class, "blSpinner");
+        brSpinner = hardwareMap.get(CRServo.class, "brSpinner");
+
         // Reverse motors
-        brDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         frDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        shoot.setDirection(DcMotorSimple.Direction.REVERSE);
+        brDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        trSpinner.setDirection(DcMotorSimple.Direction.REVERSE);
+        brSpinner.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Reset all motors
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -114,14 +125,14 @@ public class Robot {
         //odo.setPosition(new Pose2D(DistanceUnit.MM, -923.925, 1601.47, RADIANS, 0));
     }
 
-    public void be(int waitAfter) {
-        be();
+    public void updateMotorPowers(int waitAfter) {
+        updateMotorPowers();
 
         // Wait (to allow the action done to be performed)
         sleep(waitAfter);
     }
 
-    public void be() {
+    public void updateMotorPowers() {
         flDrive.setPower(flDrivePower / driveSlowdown);
         frDrive.setPower(frDrivePower / driveSlowdown);
         blDrive.setPower(blDrivePower / driveSlowdown);
@@ -133,9 +144,14 @@ public class Robot {
         intake.setPower(intakePower);
 
         shoot.setPower(shootPower);
+
+        tlSpinner.setPower(spinnerPower);
+        trSpinner.setPower(spinnerPower);
+        blSpinner.setPower(spinnerPower);
+        brSpinner.setPower(spinnerPower);
     }
 
-    public void what() {
+    public void updateTelemetry() {
         telemetry.addData("FL Drive Power: ", flDrivePower);
         telemetry.addData("FR Drive Power: ", frDrivePower);
         telemetry.addData("BL Drive Power: ", blDrivePower);
@@ -146,6 +162,7 @@ public class Robot {
         telemetry.addData("Slide Power: ", slidePower);
         telemetry.addData("Intake Power: ", intakePower);
         telemetry.addData("Shoot Power: ", shootPower);
+        telemetry.addData("Spinner Power: ", spinnerPower);
 
         telemetry.update();
     }
@@ -155,6 +172,7 @@ public class Robot {
 
         if (locked) {
             mainDrive(0, 0, 0, 1, 1);
+            spinnerControl(0.0);
             slideControl(-0.2);
             intakeControl(0.0);
             shootControl(0.0);
@@ -167,16 +185,18 @@ public class Robot {
                 mainGyroDrive(gp1);
             }
 
+            spinnerControl(0.0);
+
             slideControl(gp2);
             intakeControl(gp2);
             shootControl(gp2);
         }
 
         // Update state
-        be();
+        updateMotorPowers();
 
         // Update telemetry
-        what();
+        updateTelemetry();
     }
 
     public void setDrivingMode(Gamepad gp) {
@@ -269,13 +289,15 @@ public class Robot {
     }
 
     public void slideControl(double power) {
+        double clampedPower;
+
         if ((power < 0 && leftSlide.getCurrentPosition() > -2140) || (power > 0 && leftSlide.getCurrentPosition() < 0)) {
-            slideControl(power);
+            clampedPower = power;
         } else {
-            slideControl(0.0);
+            clampedPower = 0.0;
         }
         
-        double shiftedPower = power + 0.2; // some contractive power always necessary
+        double shiftedPower = clampedPower + 0.2; // some contractive power always necessary
 
         slidePower = Math.min(Math.max(shiftedPower, -1.0), 1.0); // clamp between -1 to 1
     }
@@ -283,6 +305,7 @@ public class Robot {
     public void intakeControl(Gamepad gp) {
         if (gp.a) {
             intakeControl(1.0);
+            spinnerControl(1.0);
         } else {
             intakeControl(0.0);
         }
@@ -294,10 +317,18 @@ public class Robot {
 
     public void shootControl(Gamepad gp) {
         shootControl(gp.right_trigger - gp.left_trigger);
+
+        if (Math.abs(gp.right_trigger - gp.left_trigger) > 0.3) {
+            spinnerControl(gp.right_trigger - gp.left_trigger);
+        }
     }
 
     public void shootControl(double power) {
         shootPower = power;
+    }
+
+    public void spinnerControl(double power) {
+        spinnerPower = power;
     }
 
     public void setLock(Gamepad gp) {
@@ -352,7 +383,7 @@ public class Robot {
             blDrivePower = blDrivePower * driveSlowdown;
             brDrivePower = brDrivePower * driveSlowdown;
 
-            be();
+            updateMotorPowers();
 
             sleep(DELAY);
         }
@@ -398,7 +429,7 @@ public class Robot {
             blDrivePower = blDrivePower * driveSlowdown;
             brDrivePower = brDrivePower * driveSlowdown;
 
-            be();
+            updateMotorPowers();
 
             sleep(DELAY);
         }
@@ -481,7 +512,7 @@ public class Robot {
             blDrivePower = blDrivePower * driveSlowdown;
             brDrivePower = brDrivePower * driveSlowdown;
 
-            be();
+            updateMotorPowers();
 
             sleep(DELAY);
         }
@@ -557,7 +588,7 @@ public class Robot {
             blDrivePower = blDrivePower * driveSlowdown;
             brDrivePower = brDrivePower * driveSlowdown;
 
-            be();
+            updateMotorPowers();
 
             sleep(DELAY);
         }
@@ -602,7 +633,7 @@ public class Robot {
             blDrivePower = blDrivePower * driveSlowdown;
             brDrivePower = brDrivePower * driveSlowdown;
 
-            be();
+            updateMotorPowers();
 
             sleep(DELAY);
         }
@@ -651,7 +682,7 @@ public class Robot {
             blDrivePower = blDrivePower * driveSlowdown;
             brDrivePower = brDrivePower * driveSlowdown;
 
-            be();
+            updateMotorPowers();
 
             sleep(DELAY);
         }
@@ -704,9 +735,9 @@ public class Robot {
         double denominator = 2 * (.9845 - dist * Math.tan(Math.toRadians(theta)));
         return secant * Math.sqrt(numerator / denominator);
     }
-}
 
-enum DriveMode {
-    NORMAL,
-    GYRO
+    public enum DriveMode {
+        NORMAL,
+        GYRO
+    }
 }
