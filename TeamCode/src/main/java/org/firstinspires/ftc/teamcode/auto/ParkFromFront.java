@@ -16,8 +16,6 @@ public class ParkFromFront extends LinearOpMode {
 
         robot.init(hardwareMap);
 
-        camera = new Camera(hardwareMap.get(WebcamName.class, "Webcam 1"));
-
         waitForStart();
 
         robot.driveTo(100);

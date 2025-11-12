@@ -6,7 +6,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.utils.Camera;
 import org.firstinspires.ftc.teamcode.DECODERobot;
 
-@Autonomous(name = "ParkFromFront", group = "Auto")
+@Autonomous(name = "ParkFromBack", group = "Auto")
 public class ParkFromBack extends LinearOpMode {
     DECODERobot robot = new DECODERobot(telemetry);
 
@@ -15,8 +15,6 @@ public class ParkFromBack extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         robot.init(hardwareMap);
-
-        camera = new Camera(hardwareMap.get(WebcamName.class, "Webcam 1"));
 
         waitForStart();
 

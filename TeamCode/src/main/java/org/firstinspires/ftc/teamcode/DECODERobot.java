@@ -38,6 +38,7 @@ public class DECODERobot {
     public double intakePower;
     private DcMotor intake;
 
+    public ShootingMode shootingMode = ShootingMode.LOW;
     public double shootPower;
     private DcMotor shoot;
 
@@ -316,10 +317,20 @@ public class DECODERobot {
     }
 
     public void shootControl(Gamepad gp) {
-        shootControl(gp.right_trigger - gp.left_trigger);
+        if (gp.dpad_down) {
+            shootingMode = ShootingMode.LOW;
+        } else if (gp.dpad_up) {
+            shootingMode = ShootingMode.HIGH;
+        }
 
-        if (Math.abs(gp.right_trigger - gp.left_trigger) > 0.3) {
-            spinnerControl(gp.right_trigger - gp.left_trigger);
+        if (gp.right_trigger > 0.3) {
+            if (shootingMode == ShootingMode.LOW) {
+                spinnerControl(0.4);
+            } else {
+                spinnerControl(0.8);
+            }
+        } else if (gp.left_trigger > 0.3) {
+            spinnerControl(-0.4);
         }
     }
 
@@ -739,5 +750,10 @@ public class DECODERobot {
     public enum DriveMode {
         NORMAL,
         GYRO
+    }
+
+    public enum ShootingMode {
+        LOW,
+        HIGH
     }
 }
