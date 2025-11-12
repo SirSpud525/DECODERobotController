@@ -24,9 +24,11 @@ public class ParkFromFront extends LinearOpMode {
         //to shoot if running
         robot.turnToFromHere(-45);
         robot.shootControl(0.0);
-        //
+        //go back and block
         robot.turnToFromHere(45);
         robot.driveTo(-50);
+        //park if we can
+        robot.strafe(50)
 
         stop();
     }
