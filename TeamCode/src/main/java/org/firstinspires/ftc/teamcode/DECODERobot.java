@@ -323,14 +323,16 @@ public class DECODERobot {
             shootingMode = ShootingMode.HIGH;
         }
 
-        if (gp.right_trigger > 0.3) {
+        if (gp.right_trigger > 0.2) {
             if (shootingMode == ShootingMode.LOW) {
                 spinnerControl(0.4);
             } else {
-                spinnerControl(0.8);
+                spinnerControl(0.7);
             }
-        } else if (gp.left_trigger > 0.3) {
+        } else if (gp.left_trigger > 0.2) {
             spinnerControl(-0.4);
+        } else {
+            spinnerControl(0.0);
         }
     }
 

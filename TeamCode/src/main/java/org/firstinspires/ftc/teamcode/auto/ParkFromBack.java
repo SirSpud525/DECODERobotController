@@ -21,13 +21,16 @@ public class ParkFromBack extends LinearOpMode {
         robot.driveTo(100);
         //to shoot if running
         robot.turnToFromHere(180);
+        robot.shootControl(0.7);
+        robot.updateMotorPowers(3000);
         robot.shootControl(0.0);
-        //
+        robot.updateMotorPowers();
+
         robot.turnToFromHere(-135);
-        robot.strafe(50);
+        robot.strafeTo(50);
         robot.driveTo(50);
-        //if can park
-        robot.strafe(-50);
+
+        robot.strafeTo(-50);
         
         stop();
     }
