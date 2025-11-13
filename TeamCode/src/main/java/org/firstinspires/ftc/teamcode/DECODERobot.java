@@ -51,6 +51,10 @@ public class DECODERobot {
     private final ElapsedTime lockDebounce = new ElapsedTime();
     public boolean locked = false;
 
+    private ElapsedTime rpmDebounce = new ElapsedTime();
+    public double currentRPM;
+    public double lastPos;
+
     public IMU imu;
     public GoBildaPinpointDriver odometry;
 
@@ -163,6 +167,7 @@ public class DECODERobot {
         telemetry.addData("Slide Power: ", slidePower);
         telemetry.addData("Intake Power: ", intakePower);
         telemetry.addData("Shoot Power: ", shootPower);
+        telemetry.addData("RPM: ", currentRPM);
         telemetry.addData("Spinner Power: ", spinnerPower);
 
         telemetry.update();
@@ -198,6 +203,7 @@ public class DECODERobot {
 
         // Update telemetry
         updateTelemetry();
+        rpmDebounce.reset();
     }
 
     public void setDrivingMode(Gamepad gp) {
@@ -323,23 +329,47 @@ public class DECODERobot {
             shootingMode = ShootingMode.HIGH;
         }
 
+        double intendedPower;
+
         if (gp.right_trigger > 0.2) {
             if (shootingMode == ShootingMode.LOW) {
-                spinnerControl(0.4);
+//                shootControl(0.4);
+                shootControl(shootPowerAtRPM(2400));
             } else {
-                spinnerControl(0.7);
+                shootControl(0.7);
+//                shootControl(shootPowerAtRPM(4200));
             }
         } else if (gp.left_trigger > 0.2) {
-            spinnerControl(-0.4);
+            shootControl(-0.4);
         } else {
-            spinnerControl(0.0);
+            shootControl(0.0);
+            currentRPM = 0.0;
         }
     }
 
     public void shootControl(double power) {
         shootPower = power;
     }
-
+    public double shootPowerAtRPM(double desiredRpm){
+        //calculate rpm
+        double pos = shoot.getCurrentPosition();
+        double deltaPos = Math.abs(pos - lastPos);
+        currentRPM = ((deltaPos / 103.6) / rpmDebounce.milliseconds()) * 60000;
+        double toReturn;
+        //determine a proportional amount of power
+        double dist = desiredRpm - currentRPM;
+        if (Math.signum(dist) == -1) {
+            toReturn = 0.25 * (desiredRpm/2400);
+        }else if (Math.abs(dist) > (700 * (desiredRpm/2400))){
+            toReturn = (Math.signum(dist));
+        } else {
+            double prop = (dist/Math.abs(currentRPM) / 3);
+            toReturn = prop;
+        }
+        //reset needed things
+        lastPos = pos;
+        return toReturn;
+    }
     public void spinnerControl(double power) {
         spinnerPower = power;
     }
