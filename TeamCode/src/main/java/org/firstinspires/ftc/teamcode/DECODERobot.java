@@ -38,11 +38,12 @@ public class DECODERobot {
     public double intakePower;
     private DcMotor intake;
 
-    public ShootingMode shootingMode = ShootingMode.LOW;
+    public ShootingMode shootingMode = ShootingMode.HIGH;
     public double shootPower;
     private DcMotor shoot;
 
     public double spinnerPower = 0.0;
+    public boolean disableTop = false;
     private CRServo tlSpinner;
     private CRServo trSpinner;
     private CRServo blSpinner;
@@ -50,10 +51,6 @@ public class DECODERobot {
 
     private final ElapsedTime lockDebounce = new ElapsedTime();
     public boolean locked = false;
-
-    private ElapsedTime rpmDebounce = new ElapsedTime();
-    public double currentRPM;
-    public double lastPos;
 
     public IMU imu;
     public GoBildaPinpointDriver odometry;
@@ -150,8 +147,10 @@ public class DECODERobot {
 
         shoot.setPower(shootPower);
 
-        tlSpinner.setPower(spinnerPower);
-        trSpinner.setPower(spinnerPower);
+        if (!disableTop) {
+            tlSpinner.setPower(spinnerPower);
+            trSpinner.setPower(spinnerPower);
+        }
         blSpinner.setPower(spinnerPower);
         brSpinner.setPower(spinnerPower);
     }
@@ -167,8 +166,9 @@ public class DECODERobot {
         telemetry.addData("Slide Power: ", slidePower);
         telemetry.addData("Intake Power: ", intakePower);
         telemetry.addData("Shoot Power: ", shootPower);
-        telemetry.addData("RPM: ", currentRPM);
+        telemetry.addData("Shoot Mode: ", shootingMode);
         telemetry.addData("Spinner Power: ", spinnerPower);
+        telemetry.addData("Top Spinner Disabled: ", disableTop);
 
         telemetry.update();
     }
@@ -191,8 +191,7 @@ public class DECODERobot {
                 mainGyroDrive(gp1);
             }
 
-            spinnerControl(0.0);
-
+            spinnerControl(gp2);
             slideControl(gp2);
             intakeControl(gp2);
             shootControl(gp2);
@@ -203,7 +202,6 @@ public class DECODERobot {
 
         // Update telemetry
         updateTelemetry();
-        rpmDebounce.reset();
     }
 
     public void setDrivingMode(Gamepad gp) {
@@ -313,6 +311,9 @@ public class DECODERobot {
         if (gp.a) {
             intakeControl(1.0);
             spinnerControl(1.0);
+        } else if (gp.x) {
+            intakeControl(1.0);
+            spinnerControl(1.0, true);
         } else {
             intakeControl(0.0);
         }
@@ -329,49 +330,36 @@ public class DECODERobot {
             shootingMode = ShootingMode.HIGH;
         }
 
-        double intendedPower;
-
         if (gp.right_trigger > 0.2) {
             if (shootingMode == ShootingMode.LOW) {
-//                shootControl(0.4);
-                shootControl(shootPowerAtRPM(2400));
+                shootControl(0.85);
             } else {
-                shootControl(0.7);
-//                shootControl(shootPowerAtRPM(4200));
+                shootControl(0.9);
             }
         } else if (gp.left_trigger > 0.2) {
-            shootControl(-0.4);
+            shootControl(-0.8);
+            spinnerControl(-1.0);
         } else {
             shootControl(0.0);
-            currentRPM = 0.0;
         }
     }
 
     public void shootControl(double power) {
         shootPower = power;
     }
-    public double shootPowerAtRPM(double desiredRpm){
-        //calculate rpm
-        double pos = shoot.getCurrentPosition();
-        double deltaPos = Math.abs(pos - lastPos);
-        currentRPM = ((deltaPos / 103.6) / rpmDebounce.milliseconds()) * 60000;
-        double toReturn;
-        //determine a proportional amount of power
-        double dist = desiredRpm - currentRPM;
-        if (Math.signum(dist) == -1) {
-            toReturn = 0.25 * (desiredRpm/2400);
-        }else if (Math.abs(dist) > (700 * (desiredRpm/2400))){
-            toReturn = (Math.signum(dist));
-        } else {
-            double prop = (dist/Math.abs(currentRPM) / 3);
-            toReturn = prop;
-        }
-        //reset needed things
-        lastPos = pos;
-        return toReturn;
+
+    public void spinnerControl(Gamepad gp) {
+        spinnerControl(-gp.left_stick_y);
     }
+
     public void spinnerControl(double power) {
         spinnerPower = power;
+        disableTop = false;
+    }
+
+    public void spinnerControl(double power, boolean topDisabled) {
+        spinnerPower = power;
+        disableTop = topDisabled;
     }
 
     public void setLock(Gamepad gp) {
