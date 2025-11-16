@@ -42,8 +42,8 @@ public class DECODERobot {
     public double shootPower;
     private DcMotor shoot;
 
-    public double spinnerPower = 0.0;
-    public boolean disableTop = false;
+    public double bottomSpinnerPower = 0.0;
+    public double topSpinnerPower = 0.0;
     private CRServo tlSpinner;
     private CRServo trSpinner;
     private CRServo blSpinner;
@@ -147,12 +147,11 @@ public class DECODERobot {
 
         shoot.setPower(shootPower);
 
-        if (!disableTop) {
-            tlSpinner.setPower(spinnerPower);
-            trSpinner.setPower(spinnerPower);
-        }
-        blSpinner.setPower(spinnerPower);
-        brSpinner.setPower(spinnerPower);
+        tlSpinner.setPower(topSpinnerPower);
+        trSpinner.setPower(topSpinnerPower);
+
+        blSpinner.setPower(bottomSpinnerPower);
+        brSpinner.setPower(bottomSpinnerPower);
     }
 
     public void updateTelemetry() {
@@ -167,8 +166,8 @@ public class DECODERobot {
         telemetry.addData("Intake Power: ", intakePower);
         telemetry.addData("Shoot Power: ", shootPower);
         telemetry.addData("Shoot Mode: ", shootingMode);
-        telemetry.addData("Spinner Power: ", spinnerPower);
-        telemetry.addData("Top Spinner Disabled: ", disableTop);
+        telemetry.addData("Top Spinner Power: ", topSpinnerPower);
+        telemetry.addData("Bottom Spinner Power: ", bottomSpinnerPower);
 
         telemetry.update();
     }
@@ -191,10 +190,12 @@ public class DECODERobot {
                 mainGyroDrive(gp1);
             }
 
-            spinnerControl(gp2);
+            spinnerControl(0.0);
             slideControl(gp2);
             intakeControl(gp2);
             shootControl(gp2);
+            spinnerControl(gp2);
+            bottomSpinnerOverride(gp2);
         }
 
         // Update state
@@ -226,8 +227,8 @@ public class DECODERobot {
         double drive = -gp.left_stick_y;
         double turn = gp.right_stick_x;
         double strafe = gp.left_stick_x;
-        double slowDownFactor = gp.right_trigger;
-        double speedUpFactor = gp.left_trigger;
+        double slowDownFactor = gp.left_trigger;
+        double speedUpFactor = gp.right_trigger;
 
         mainDrive(drive, turn, strafe, slowDownFactor, speedUpFactor);
     }
@@ -313,7 +314,7 @@ public class DECODERobot {
             spinnerControl(1.0);
         } else if (gp.x) {
             intakeControl(1.0);
-            spinnerControl(1.0, true);
+            spinnerControl(0.0, 1.0);
         } else {
             intakeControl(0.0);
         }
@@ -332,9 +333,9 @@ public class DECODERobot {
 
         if (gp.right_trigger > 0.2) {
             if (shootingMode == ShootingMode.LOW) {
-                shootControl(0.85);
+                shootControl(0.71);
             } else {
-                shootControl(0.9);
+                shootControl(0.78);
             }
         } else if (gp.left_trigger > 0.2) {
             shootControl(-0.8);
@@ -349,27 +350,34 @@ public class DECODERobot {
     }
 
     public void spinnerControl(Gamepad gp) {
-        spinnerControl(-gp.left_stick_y);
+        if (Math.abs(gp.left_stick_y) > 0.2) {
+            spinnerControl(-gp.left_stick_y);
+        }
     }
 
+    public void bottomSpinnerOverride(Gamepad gp) {
+        if (gp.y) {
+            spinnerControl(-1.0, bottomSpinnerPower);
+        }
+    }
     public void spinnerControl(double power) {
-        spinnerPower = power;
-        disableTop = false;
+        topSpinnerPower = power;
+        bottomSpinnerPower = power;
     }
 
-    public void spinnerControl(double power, boolean topDisabled) {
-        spinnerPower = power;
-        disableTop = topDisabled;
+    public void spinnerControl(double top, double bottom) {
+        topSpinnerPower = top;
+        bottomSpinnerPower = bottom;
     }
 
     public void setLock(Gamepad gp) {
-        if (gp.y) {
-            if (lockDebounce.milliseconds() < 500) return;
-
-            lockDebounce.reset();
-
-            locked = !locked;
-        }
+//        if (gp.y) {
+//            if (lockDebounce.milliseconds() < 500) return;
+//
+//            lockDebounce.reset();
+//
+//            locked = !locked;
+//        }
     }
 
     public void driveTo(int pos) {
