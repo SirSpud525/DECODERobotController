@@ -5,8 +5,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.utils.Camera;
 import org.firstinspires.ftc.teamcode.DECODERobot;
 
-@Autonomous(name = "ParkFromFront", group = "Auto")
-public class ParkFromFront extends LinearOpMode {
+@Autonomous(name = "ParkFromFrontBlue", group = "Auto")
+public class ParkFromFrontBlue extends LinearOpMode {
     DECODERobot robot = new DECODERobot(telemetry);
 
     Camera camera;
@@ -17,18 +17,20 @@ public class ParkFromFront extends LinearOpMode {
 
         waitForStart();
 
-        robot.driveTo(100);
+        robot.driveTo(300, 2);
         //to shoot if running
-        robot.turnToFromHere(-45);
-        robot.shootControl(0.7);
+        robot.turnToFromHere(-155);
+        robot.shootControl(0.75);
+        robot.updateMotorPowers(5000);
+        robot.spinnerControl(1.0);
+        robot.intakeControl(1.0);
         robot.updateMotorPowers(3000);
+        robot.intakeControl(0.0);
+        robot.intakeControl(0.0);
         robot.shootControl(0.0);
         robot.updateMotorPowers();
-        //go back and block
-        robot.turnToFromHere(45);
-        robot.driveTo(-50);
-        //park if we can
-        robot.strafeTo(50);
+        robot.turnToFromHere(0);
+        robot.driveTo(300, 2);
 
         stop();
     }

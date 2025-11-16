@@ -92,7 +92,7 @@ public class DECODERobot {
         intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        shoot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Brake motors when they have zero power
         flDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
