@@ -181,8 +181,8 @@ public class MashedPotatoRobot {
     }
     public double distToVelocity(double theta) {
         //Given theta (The angle at which the artifact shoots at) return the velocity needed to reach the basket
-        double x = odo.getPosX(DistanceUnit.MM);
-        double y = odo.getPosY(DistanceUnit.MM);
+        double x = 1000 * odo.getPosX(DistanceUnit.MM);
+        double y = 1000 * odo.getPosY(DistanceUnit.MM);
         double dist = Math.sqrt(x * x + y * y);
         double secant = 1 / Math.cos(Math.toRadians(theta));
         double numerator = -9.8 * dist * dist;
@@ -193,7 +193,7 @@ public class MashedPotatoRobot {
         //Returns power based on distance
         double v = distToVelocity(45.0);
         double RPM = 60 * v / (3.1415926 * 2 * .062);
-        return RPM / 6000; //Returns RPM needed divded by max RPM
+        return RPM / 6000; //Returns RPM needed divided by max RPM
     }
     private void setDriveMode(final DcMotor.RunMode mode) {
         frontLeft.setMode(mode);
@@ -297,6 +297,24 @@ public class MashedPotatoRobot {
     //USE THE PAPER WE WROTE THE OTHER WEEK
     public void intakeServos(Gamepad gp2) {
         double currentInput = gp2.left_stick_y;
+        if (currentInput > 0){
+            upperRight.setPower(1.0);
+            upperLeft.setPower(-1.0);
+            lowerRight.setPower(1.0);
+            lowerLeft.setPower(-1.0);
+        }
+        else if (currentInput < 0){
+            upperRight.setPower(-1.0);
+            upperLeft.setPower(1.0);
+            lowerRight.setPower(-1.0);
+            lowerLeft.setPower(1.0);
+        }
+        else{
+            upperRight.setPower(0);
+            upperLeft.setPower(0);
+            lowerRight.setPower(0);
+            lowerLeft.setPower(0);
+        }
 
     }
 
@@ -308,7 +326,6 @@ public class MashedPotatoRobot {
     //up is high power, down is low power, right is manual power
     //you can use an enum to switch modes, and use an ElapsedTime for debounce //am not using debounce
     //Antonio can help to declare these if needed
-    //
     //part 2:
     //if right trigger is pressed, shoot as follows:
     //if power mode is manual, use left bumper to decrease power, right to increase
@@ -317,8 +334,17 @@ public class MashedPotatoRobot {
     //if power mode is high, set power to 0.8, if it is low, set power to 0.6
     //if the trigger isn't pressed, set power to 0
 
-    public void Handle_Shoot_Motors(Gamepad gp2){
-        // If the gp2 dpad is down arrow, set the
+    public void handleShootMotors(Gamepad gp2){
+        if (gp2.dpad_up) {
+            shootMotor.setPower(0.8);
+        }
+        if (gp2.dpad_down) {
+            shootMotor.setPower(0.2);
+        }
+        if (gp2.dpad_right) {
+            //shootMotor.setPower(//manual power?);
+        }
+        // If the gp2 dpad is down arrow, set the power accordingly (up is high, down is low, right is manual etc.)
     }
 
     public void Driving(Gamepad gp1, Telemetry telemetry) {
