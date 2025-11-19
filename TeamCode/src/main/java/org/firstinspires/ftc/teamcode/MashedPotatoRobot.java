@@ -52,10 +52,10 @@ public class MashedPotatoRobot {
     private DcMotor slideRight;
     private DcMotor shootMotor;
     private DcMotor intake;
-    private CRServo upLowerRight;
-    private CRServo upLowerLeft;
-    private CRServo upUpperRight;
-    private CRServo upUpperLeft;
+    private CRServo lowerRight;
+    private CRServo lowerLeft;
+    private CRServo upperRight;
+    private CRServo upperLeft;
     public IMU imu;
     public GoBildaPinpointDriver odo;
 
@@ -74,10 +74,10 @@ public class MashedPotatoRobot {
         slideRight = hardwareMap.get(DcMotor.class, "slideRight");
         shootMotor = hardwareMap.get(DcMotor.class, "shoot");
         intake = hardwareMap.get(DcMotor.class, "intake");
-        upLowerLeft = hardwareMap.get(CRServo.class, "upLowerLeft");
-        upLowerRight = hardwareMap.get(CRServo.class, "upLowerRight");
-        upUpperLeft = hardwareMap.get(CRServo.class, "upUpperLeft");
-        upUpperRight = hardwareMap.get(CRServo.class, "upUpperRight");
+        lowerLeft = hardwareMap.get(CRServo.class, "lowerLeft");
+        lowerRight = hardwareMap.get(CRServo.class, "lowerRight");
+        upperLeft = hardwareMap.get(CRServo.class, "upperLeft");
+        upperRight = hardwareMap.get(CRServo.class, "upperRight");
 
         // Set reverse motors
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -189,6 +189,12 @@ public class MashedPotatoRobot {
         double denominator = 2 * (.9845 - dist * Math.tan(Math.toRadians(theta)));
         return secant * Math.sqrt(numerator / denominator);
     }
+    public double distToPower(){
+        //Returns power based on distance
+        double v = distToVelocity(45.0);
+        double RPM = 60 * v / (3.1415926 * 2 * .062);
+        return RPM / 6000; //Returns RPM needed divded by max RPM
+    }
     private void setDriveMode(final DcMotor.RunMode mode) {
         frontLeft.setMode(mode);
         frontRight.setMode(mode);
@@ -280,17 +286,36 @@ public class MashedPotatoRobot {
             intake.setPower(0);
         }
     }
+    //autumn
     //use 4 servos to move the artifacts
-    //upUpperRight
-    //upUpperLeft
-    //upLowerRight
-    //upLowerLeft
+    //upperRight
+    //upperLeft
+    //lowerRight
+    //lowerLeft
     //all servos should move the artifact up when left stick is up and and down when left stick
-    //is down for now assume that 1.0 turns to the right, -1.0 to the left
+    //is down. For now assume that 1.0 turns to the right, -1.0 to the left
+    //USE THE PAPER WE WROTE THE OTHER WEEK
     public void intakeServos(Gamepad gp2) {
         double currentInput = gp2.left_stick_y;
 
     }
+
+    //saumya
+    //handle shoot motors for teleOp using gp2
+    //use shootMotor for power
+    //
+    //part 1: use d_pad to set mode - dpad inputs are boolean
+    //up is high power, down is low power, right is manual power
+    //you can use an enum to switch modes, and use an ElapsedTime for debounce
+    //Antonio can help to declare these if needed
+    //
+    //part 2:
+    //if right trigger is pressed, shoot as follows:
+    //if power mode is manual, use left bumper to decrease power, right to increase
+    //use a global double to track this power amount, and ensure it only changes a small
+    //amount each time the function runs
+    //if power mode is high, set power to 0.8, if it is low, set power to 0.6
+    //if the trigger isn't pressed, set power to 0
 
     public void Driving(Gamepad gp1, Telemetry telemetry) {
         //uses driver input to speedup/slowdown as needed
