@@ -304,9 +304,9 @@ public class MashedPotatoRobot {
     //handle shoot motors for teleOp using gp2
     //use shootMotor for power
     //
-    //part 1: use d_pad to set mode - dpad inputs are boolean
+    //part 1: use d_pad to set mode4 - dpad inputs are boolean
     //up is high power, down is low power, right is manual power
-    //you can use an enum to switch modes, and use an ElapsedTime for debounce
+    //you can use an enum to switch modes, and use an ElapsedTime for debounce //am not using debounce
     //Antonio can help to declare these if needed
     //
     //part 2:
@@ -316,6 +316,10 @@ public class MashedPotatoRobot {
     //amount each time the function runs
     //if power mode is high, set power to 0.8, if it is low, set power to 0.6
     //if the trigger isn't pressed, set power to 0
+
+    public void Handle_Shoot_Motors(Gamepad gp2){
+        // If the gp2 dpad is down arrow, set the
+    }
 
     public void Driving(Gamepad gp1, Telemetry telemetry) {
         //uses driver input to speedup/slowdown as needed
