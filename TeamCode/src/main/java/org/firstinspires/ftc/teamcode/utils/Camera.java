@@ -46,4 +46,10 @@ public class Camera {
             }
     }
 
+    @Override
+    public String toString() {
+        if (currentlyInSight) {
+            return "Can see tag #" + id + " at (" + roll + ", " + pitch + ", " + yaw + ")" + "at (" + x + ", " + y + ", " + z + ")";
+        }
+    }
 }

@@ -16,7 +16,7 @@ public class ParkFromFrontBlue extends LinearOpMode {
         robot.init(hardwareMap);
 
         waitForStart();
-        robot.slideControl(0.2);
+//        robot.slideControl(0.2);
         robot.updateMotorPowers(2000);
         robot.driveTo(-300, 2);
         robot.turnToFromHere(27);

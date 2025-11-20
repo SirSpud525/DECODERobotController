@@ -12,8 +12,10 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.utils.Camera;
 
 
 public class DECODERobot {
@@ -31,16 +33,17 @@ public class DECODERobot {
     private DcMotor blDrive;
     private DcMotor brDrive;
 
-    public double slidePower;
-    private DcMotor leftSlide;
-    private DcMotor rightSlide;
+//    public double slidePower;
+//    private DcMotor leftSlide;
+//    private DcMotor rightSlide;
 
     public double intakePower;
     private DcMotor intake;
 
     public ShootingMode shootingMode = ShootingMode.HIGH;
     public double shootPower;
-    private DcMotor shoot;
+    private DcMotor leftShoot;
+    private DcMotor rightShoot;
 
     public double bottomSpinnerPower = 0.0;
     public double topSpinnerPower = 0.0;
@@ -53,6 +56,9 @@ public class DECODERobot {
     public boolean locked = false;
 
     public IMU imu;
+
+    public Camera camera;
+
     public GoBildaPinpointDriver odometry;
 
     public DECODERobot(Telemetry robotTelemetry) {
@@ -61,14 +67,15 @@ public class DECODERobot {
 
     public void init(HardwareMap hardwareMap) {
         // Initialize hardware map - declares code version of physical motors as mapped in the driver hub
-        flDrive = hardwareMap.get(DcMotor.class, "flDrive"); // Port
-        frDrive = hardwareMap.get(DcMotor.class, "frDrive"); // Port
-        blDrive = hardwareMap.get(DcMotor.class, "blDrive"); // Port
-        brDrive = hardwareMap.get(DcMotor.class, "brDrive"); // Port
-        leftSlide = hardwareMap.get(DcMotor.class, "leftSlide"); // Port
-        rightSlide = hardwareMap.get(DcMotor.class, "rightSlide"); // Port
-        intake = hardwareMap.get(DcMotor.class, "intake"); // Port
-        shoot = hardwareMap.get(DcMotor.class, "shoot"); // Port
+        flDrive = hardwareMap.get(DcMotor.class, "flDrive");
+        frDrive = hardwareMap.get(DcMotor.class, "frDrive");
+        blDrive = hardwareMap.get(DcMotor.class, "blDrive");
+        brDrive = hardwareMap.get(DcMotor.class, "brDrive");
+//        leftSlide = hardwareMap.get(DcMotor.class, "leftSlide");
+//        rightSlide = hardwareMap.get(DcMotor.class, "rightSlide");
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        leftShoot = hardwareMap.get(DcMotor.class, "leftShoot");
+        rightShoot = hardwareMap.get(DcMotor.class, "rightShoot");
 
         tlSpinner = hardwareMap.get(CRServo.class, "tlSpinner");
         trSpinner = hardwareMap.get(CRServo.class, "trSpinner");
@@ -85,24 +92,27 @@ public class DECODERobot {
         // Reset all motors
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        leftSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        rightSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        shoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        shoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightShoot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightShoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Brake motors when they have zero power
         flDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         blDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         brDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        leftSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        rightSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        shoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightShoot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Set up the IMU (gyro/angle sensor)
         IMU.Parameters imuParameters = new IMU.Parameters(
@@ -115,6 +125,8 @@ public class DECODERobot {
         imu.initialize(imuParameters);
 
         this.imu.resetYaw();
+
+        camera = new Camera(hardwareMap.get(WebcamName.class, "Webcam 1"));
 
         //Initializing odometry
 //        odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
@@ -140,12 +152,13 @@ public class DECODERobot {
         blDrive.setPower(blDrivePower / driveSlowdown);
         brDrive.setPower(brDrivePower / driveSlowdown);
 
-        leftSlide.setPower(slidePower);
-        rightSlide.setPower(slidePower);
+//        leftSlide.setPower(slidePower);
+//        rightSlide.setPower(slidePower);
 
         intake.setPower(intakePower);
 
-        shoot.setPower(shootPower);
+        leftShoot.setPower(shootPower);
+        rightShoot.setPower(-shootPower);
 
         tlSpinner.setPower(topSpinnerPower);
         trSpinner.setPower(topSpinnerPower);
@@ -155,6 +168,8 @@ public class DECODERobot {
     }
 
     public void updateTelemetry() {
+        camera.update();
+
         telemetry.addData("FL Drive Power: ", flDrivePower);
         telemetry.addData("FR Drive Power: ", frDrivePower);
         telemetry.addData("BL Drive Power: ", blDrivePower);
@@ -162,7 +177,8 @@ public class DECODERobot {
         telemetry.addData("Drive Slowdown: ", driveSlowdown);
         telemetry.addData("Drive Mode: ", driveMode);
         telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
-        telemetry.addData("Slide Power: ", slidePower);
+//        telemetry.addData("Slide Power: ", slidePower);
+        telemetry.addData("Camera: ", camera);
         telemetry.addData("Intake Power: ", intakePower);
         telemetry.addData("Shoot Power: ", shootPower);
         telemetry.addData("Shoot Mode: ", shootingMode);
@@ -178,7 +194,7 @@ public class DECODERobot {
         if (locked) {
             mainDrive(0, 0, 0, 1, 1);
             spinnerControl(0.0);
-            slideControl(-0.2);
+//            slideControl(-0.2);
             intakeControl(0.0);
             shootControl(0.0);
         } else {
@@ -191,7 +207,7 @@ public class DECODERobot {
             }
 
             spinnerControl(0.0);
-            slideControl(gp2);
+//            slideControl(gp2);
             intakeControl(gp2);
             shootControl(gp2);
             spinnerControl(gp2);
@@ -281,32 +297,32 @@ public class DECODERobot {
         mainDrive(actualDrive, turn, actualStrafe, slowDownFactor, speedUpFactor);
     }
 
-    public void slideControl(Gamepad gp) {
-        boolean contract = gp.left_bumper && !gp.right_bumper;
-        boolean extend = gp.right_bumper && !gp.left_bumper;
+//    public void slideControl(Gamepad gp) {
+//        boolean contract = gp.left_bumper && !gp.right_bumper;
+//        boolean extend = gp.right_bumper && !gp.left_bumper;
+//
+//        if (contract) {
+//            slideControl(1.0);
+//        } else if (extend) {
+//            slideControl(-1.0);
+//        } else {
+//            slideControl(0.0);
+//        }
+//    }
 
-        if (contract) {
-            slideControl(1.0);
-        } else if (extend) {
-            slideControl(-1.0);
-        } else {
-            slideControl(0.0);
-        }
-    }
-
-    public void slideControl(double power) {
-        double clampedPower;
-
-        if ((power < 0 && leftSlide.getCurrentPosition() > -2140) || (power > 0 && leftSlide.getCurrentPosition() < 0)) {
-            clampedPower = power;
-        } else {
-            clampedPower = 0.0;
-        }
-        
-        double shiftedPower = clampedPower + 0.2; // some contractive power always necessary
-
-        slidePower = Math.min(Math.max(shiftedPower, -1.0), 1.0); // clamp between -1 to 1
-    }
+//    public void slideControl(double power) {
+//        double clampedPower;
+//
+//        if ((power < 0 && leftSlide.getCurrentPosition() > -2140) || (power > 0 && leftSlide.getCurrentPosition() < 0)) {
+//            clampedPower = power;
+//        } else {
+//            clampedPower = 0.0;
+//        }
+//
+//        double shiftedPower = clampedPower + 0.2; // some contractive power always necessary
+//
+//        slidePower = Math.min(Math.max(shiftedPower, -1.0), 1.0); // clamp between -1 to 1
+//    }
 
     public void intakeControl(Gamepad gp) {
         if (gp.a) {
@@ -333,9 +349,9 @@ public class DECODERobot {
 
         if (gp.right_trigger > 0.2) {
             if (shootingMode == ShootingMode.LOW) {
-                shootControl(0.71);
+                shootControl(0.4);
             } else {
-                shootControl(0.78);
+                shootControl(0.6);
             }
         } else if (gp.left_trigger > 0.2) {
             shootControl(-0.8);

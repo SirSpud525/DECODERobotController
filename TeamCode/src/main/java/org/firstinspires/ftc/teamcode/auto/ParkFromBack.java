@@ -17,7 +17,7 @@ public class ParkFromBack extends LinearOpMode {
 
         waitForStart();
 
-        robot.slideControl(0.2);
+//        robot.slideControl(0.2);
         robot.updateMotorPowers(2000);
         robot.driveTo(2150, 2);
         robot.shootControl(0.71);
