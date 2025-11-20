@@ -44,6 +44,10 @@ public class MashedPotatoRobot {
     public boolean gyroDrive = true;
     public boolean pushing = false;
     public boolean locked = false;
+    public shooterStates shooterState = shooterStates.UP;
+
+    public double manualPower = 0.5;
+
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backLeft;
@@ -318,33 +322,41 @@ public class MashedPotatoRobot {
 
     }
 
-    //saumya
-    //handle shoot motors for teleOp using gp2
-    //use shootMotor for power
-    //
-    //part 1: use d_pad to set mode4 - dpad inputs are boolean
-    //up is high power, down is low power, right is manual power
-    //you can use an enum to switch modes, and use an ElapsedTime for debounce //am not using debounce
-    //Antonio can help to declare these if needed
-    //part 2:
-    //if right trigger is pressed, shoot as follows:
-    //if power mode is manual, use left bumper to decrease power, right to increase
-    //use a global double to track this power amount, and ensure it only changes a small
-    //amount each time the function runs
-    //if power mode is high, set power to 0.8, if it is low, set power to 0.6
-    //if the trigger isn't pressed, set power to 0
-
-    public void handleShootMotors(Gamepad gp2){
+    public void handleShootMotors(Gamepad gp2) {
         if (gp2.dpad_up) {
-            shootMotor.setPower(0.8);
+            shooterState = shooterState.UP; //enum name mentioned here - Saumya
         }
         if (gp2.dpad_down) {
-            shootMotor.setPower(0.2);
+            shooterState = shooterState.DOWN;//enum name mentioned here - Saumya
         }
+
         if (gp2.dpad_right) {
-            //shootMotor.setPower(//manual power?);
+            shooterState = shooterState.MANUAL;//enum name mentioned here - Saumya
         }
-        // If the gp2 dpad is down arrow, set the power accordingly (up is high, down is low, right is manual etc.)
+
+        if(gp2.right_trigger > 0.1) {
+            if (shooterState == shooterState.UP) {
+                shootMotor.setPower(0.8); // setting power fo the shoot motto based on what enum is used - Saumya
+            }
+            if (shooterState == shooterState.DOWN) {
+                shootMotor.setPower(0.6);
+            }
+            if (shooterState == shooterState.MANUAL) {
+                shootMotor.setPower(manualPower);
+            }
+
+        }
+        else {
+            shootMotor.setPower(0); //setting power to 0 simple - Saumya
+        }
+
+        if (gp2.left_bumper == true){
+            manualPower = manualPower - 0.01;
+        }
+        if (gp2.right_bumper == true){
+            manualPower = manualPower + 0.01;
+        }
+
     }
 
     public void Driving(Gamepad gp1, Telemetry telemetry) {
@@ -749,6 +761,14 @@ public void intakePow(double power){
             handleMotorPower();
             sleep(25);
         }
+
+    }
+
+    //ENUMS
+
+    public enum shooterStates{ //enum is a list of states, usually created in all caps -Saumya
+        UP, DOWN, MANUAL
+
 
     }
 
