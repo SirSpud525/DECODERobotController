@@ -30,26 +30,28 @@ public class Camera {
     }
 
     public void update() {
-            if (tagProcessor.getDetections().size() > 0) {
-                AprilTagDetection tag = tagProcessor.getDetections().get(0);
+        if (!tagProcessor.getDetections().isEmpty()) {
+            AprilTagDetection tag = tagProcessor.getDetections().get(0);
 
-                currentlyInSight = true;
-                x = tag.ftcPose.x;
-                y = tag.ftcPose.y;
-                z = tag.ftcPose.z;
-                roll = tag.ftcPose.roll;
-                pitch = tag.ftcPose.pitch;
-                yaw = tag.ftcPose.yaw;
-                id = tag.id;
-            } else {
-                currentlyInSight = false;
-            }
+            currentlyInSight = true;
+            x = tag.ftcPose.x;
+            y = tag.ftcPose.y;
+            z = tag.ftcPose.z;
+            roll = tag.ftcPose.roll;
+            pitch = tag.ftcPose.pitch;
+            yaw = tag.ftcPose.yaw;
+            id = tag.id;
+        } else {
+            currentlyInSight = false;
+        }
     }
 
     @Override
     public String toString() {
         if (currentlyInSight) {
             return "Can see tag #" + id + " at (" + roll + ", " + pitch + ", " + yaw + ")" + "at (" + x + ", " + y + ", " + z + ")";
+        } else {
+            return "No tag in sight";
         }
     }
 }
