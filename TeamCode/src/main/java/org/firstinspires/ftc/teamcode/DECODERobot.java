@@ -67,20 +67,20 @@ public class DECODERobot {
 
     public void init(HardwareMap hardwareMap) {
         // Initialize hardware map - declares code version of physical motors as mapped in the driver hub
-        flDrive = hardwareMap.get(DcMotor.class, "flDrive");
-        frDrive = hardwareMap.get(DcMotor.class, "frDrive");
-        blDrive = hardwareMap.get(DcMotor.class, "blDrive");
-        brDrive = hardwareMap.get(DcMotor.class, "brDrive");
+        flDrive = hardwareMap.get(DcMotor.class, "flDrive");//1
+        frDrive = hardwareMap.get(DcMotor.class, "frDrive");//0
+        blDrive = hardwareMap.get(DcMotor.class, "blDrive");//3
+        brDrive = hardwareMap.get(DcMotor.class, "brDrive");//2
 //        leftSlide = hardwareMap.get(DcMotor.class, "leftSlide");
 //        rightSlide = hardwareMap.get(DcMotor.class, "rightSlide");
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        leftShoot = hardwareMap.get(DcMotor.class, "leftShoot");
-        rightShoot = hardwareMap.get(DcMotor.class, "rightShoot");
+        intake = hardwareMap.get(DcMotor.class, "intake");//1e
+        leftShoot = hardwareMap.get(DcMotor.class, "leftShoot");//2e
+        rightShoot = hardwareMap.get(DcMotor.class, "rightShoot");//3e
 
-        tlSpinner = hardwareMap.get(CRServo.class, "tlSpinner");
-        trSpinner = hardwareMap.get(CRServo.class, "trSpinner");
-        blSpinner = hardwareMap.get(CRServo.class, "blSpinner");
-        brSpinner = hardwareMap.get(CRServo.class, "brSpinner");
+        tlSpinner = hardwareMap.get(CRServo.class, "tlSpinner");//0
+        trSpinner = hardwareMap.get(CRServo.class, "trSpinner");//
+        blSpinner = hardwareMap.get(CRServo.class, "blSpinner");//2
+        brSpinner = hardwareMap.get(CRServo.class, "brSpinner");//
 
         // Reverse motors
         frDrive.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -168,8 +168,6 @@ public class DECODERobot {
     }
 
     public void updateTelemetry() {
-        camera.update();
-
         telemetry.addData("FL Drive Power: ", flDrivePower);
         telemetry.addData("FR Drive Power: ", frDrivePower);
         telemetry.addData("BL Drive Power: ", blDrivePower);
@@ -189,6 +187,8 @@ public class DECODERobot {
     }
 
     public void gamePadPower(Gamepad gp1, Gamepad gp2) {
+        camera.update();
+
         setLock(gp2);
 
         if (locked) {
@@ -200,10 +200,14 @@ public class DECODERobot {
         } else {
             setDrivingMode(gp1);
 
-            if (driveMode == DriveMode.NORMAL) {
-                mainDrive(gp1);
-            } else {
-                mainGyroDrive(gp1);
+            if(!gp1.y){
+                if (driveMode == DriveMode.NORMAL) {
+                    mainDrive(gp1);
+                } else {
+                    mainGyroDrive(gp1);
+                }
+            }else{
+                alignToTag(gp1);
             }
 
             spinnerControl(0.0);
@@ -297,6 +301,47 @@ public class DECODERobot {
         mainDrive(actualDrive, turn, actualStrafe, slowDownFactor, speedUpFactor);
     }
 
+    public void alignToTag(Gamepad gp){
+
+        if(gp.y && camera.currentlyInSight){
+            setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            double target = 0.0;
+
+            if (shootingMode == ShootingMode.HIGH){
+             target = -4.0;
+            }
+
+            double currentPosition = camera.roll;
+            double error = target - currentPosition;
+
+            double kp = 0.6;
+
+            double proportional = error * kp;
+            double turn = proportional / (180 * kp);
+            if(Math.abs(error) > 0.5) {
+                flDrivePower = turn;
+                frDrivePower = -turn;
+                blDrivePower = turn;
+                brDrivePower = -turn;
+
+                flDrivePower = (flDrivePower) + (Math.signum(flDrivePower) * 0.1);
+                frDrivePower = (frDrivePower) + (Math.signum(frDrivePower) * 0.1);
+                blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.1);
+                brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.1);
+
+                flDrivePower = flDrivePower * driveSlowdown;
+                frDrivePower = frDrivePower * driveSlowdown;
+                blDrivePower = blDrivePower * driveSlowdown;
+                brDrivePower = brDrivePower * driveSlowdown;
+            }
+        } else {
+            setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        }
+
+    }
+
 //    public void slideControl(Gamepad gp) {
 //        boolean contract = gp.left_bumper && !gp.right_bumper;
 //        boolean extend = gp.right_bumper && !gp.left_bumper;
@@ -351,7 +396,7 @@ public class DECODERobot {
             if (shootingMode == ShootingMode.LOW) {
                 shootControl(0.4);
             } else {
-                shootControl(0.6);
+                shootControl(0.45);
             }
         } else if (gp.left_trigger > 0.2) {
             shootControl(-0.8);
