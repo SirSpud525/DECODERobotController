@@ -18,33 +18,37 @@ public class ParkFromFrontBlue extends LinearOpMode {
         waitForStart();
 //        robot.slideControl(0.2);
         robot.updateMotorPowers(500);
-        robot.driveTo(-300, 2);
-        robot.turnToFromHere(27);
+        robot.driveTo(-310, 2);
+        robot.turnToFromHere(28);
 
         robot.shootControl(0.45);
-        robot.updateMotorPowers(7000);
+        robot.updateMotorPowers(5500);
         robot.spinnerControl(1.0);
         robot.intakeControl(1.0);
         robot.updateMotorPowers(600);
 
         robot.spinnerControl(0.0);
         robot.intakeControl(0.0);
-        robot.updateMotorPowers(2000);
+        robot.updateMotorPowers(2500);
         robot.spinnerControl(1.0);
         robot.intakeControl(1.0);
         robot.updateMotorPowers(2500);
 
         // move
         double power = -1.0;
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 10; i++) {
             robot.spinnerControl(power);
-            robot.updateMotorPowers(200);
+            robot.updateMotorPowers(100);
             power *= -1;
         }
 
+        robot.intakeControl(0.0);
+        robot.spinnerControl(0.0);
+        robot.updateMotorPowers(1500);
+
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
-        robot.updateMotorPowers(4000);
+        robot.updateMotorPowers(5700);
 
         robot.intakeControl(0.0);
         robot.intakeControl(0.0);
@@ -56,3 +60,4 @@ public class ParkFromFrontBlue extends LinearOpMode {
         stop();
     }
 }
+

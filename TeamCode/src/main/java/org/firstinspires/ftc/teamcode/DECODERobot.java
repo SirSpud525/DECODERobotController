@@ -274,8 +274,8 @@ public class DECODERobot {
         double drive = -gp.left_stick_y;
         double turn = gp.right_stick_x;
         double strafe = gp.left_stick_x;
-        double slowDownFactor = gp.right_trigger;
-        double speedUpFactor = gp.left_trigger;
+        double slowDownFactor = gp.left_trigger;
+        double speedUpFactor = gp.right_trigger;
 
         if (gp.a) {
             imu.resetYaw();
@@ -302,8 +302,7 @@ public class DECODERobot {
     }
 
     public void alignToTag(Gamepad gp){
-
-        if(gp.y && camera.currentlyInSight){
+        if (gp.y && camera.currentlyInSight) {
             setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             double target = 0.0;
@@ -315,10 +314,10 @@ public class DECODERobot {
             double currentPosition = camera.roll;
             double error = target - currentPosition;
 
-            double kp = 0.6;
+            double kp = 0.5;
 
             double proportional = error * kp;
-            double turn = proportional / (180 * kp);
+            double turn = proportional / (180);
             if(Math.abs(error) > 0.5) {
                 flDrivePower = turn;
                 frDrivePower = -turn;
@@ -337,7 +336,6 @@ public class DECODERobot {
             }
         } else {
             setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
         }
 
     }
@@ -396,11 +394,12 @@ public class DECODERobot {
             if (shootingMode == ShootingMode.LOW) {
                 shootControl(0.4);
             } else {
-                shootControl(0.45);
+                shootControl(0.465);
             }
         } else if (gp.left_trigger > 0.2) {
             shootControl(-0.8);
             spinnerControl(-1.0);
+            intakeControl(-1.0);
         } else {
             shootControl(0.0);
         }
@@ -589,7 +588,7 @@ public class DECODERobot {
 
             double proportional = errorAngle * kp;
 
-            double turn = proportional / (180 * kp);
+            double turn = proportional / 180;
 
             double flDrivePowerCorrection = -turn;
             double frDrivePowerCorrection = turn;
@@ -665,7 +664,7 @@ public class DECODERobot {
 
             double proportional = errorAngle * kp;
 
-            double turn = proportional / (180 * kp);
+            double turn = proportional / (180);
 
             double flDrivePowerCorrection = -turn;
             double frDrivePowerCorrection = turn;
@@ -716,7 +715,7 @@ public class DECODERobot {
 
             double proportional = error * kp;
 
-            double turn = proportional / (180 * kp);
+            double turn = proportional / (180);
 
             flDrivePower = -turn;
             frDrivePower = turn;
@@ -765,7 +764,7 @@ public class DECODERobot {
 
             double proportional = error * kp;
 
-            double turn = proportional / (180 * kp);
+            double turn = proportional / (180);
 
             flDrivePower = -turn;
             frDrivePower = turn;

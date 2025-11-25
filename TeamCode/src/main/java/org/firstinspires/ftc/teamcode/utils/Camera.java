@@ -13,6 +13,7 @@ public class Camera {
     public boolean currentlyInSight = false;
     AprilTagProcessor tagProcessor;
     VisionPortal visionPortal;
+    AprilTagDetection tag;
 
     public Camera(WebcamName camera) {
         tagProcessor = new AprilTagProcessor.Builder()
@@ -31,7 +32,7 @@ public class Camera {
 
     public void update() {
         if (!tagProcessor.getDetections().isEmpty()) {
-            AprilTagDetection tag = tagProcessor.getDetections().get(0);
+            tag = tagProcessor.getDetections().get(0);
 
             currentlyInSight = true;
             x = tag.ftcPose.x;
@@ -42,7 +43,16 @@ public class Camera {
             yaw = tag.ftcPose.yaw;
             id = tag.id;
         } else {
+            tag = null;
+
             currentlyInSight = false;
+            x = 0;
+            y = 0;
+            z = 0;
+            roll = 0;
+            pitch = 0;
+            yaw = 0;
+            id = 0;
         }
     }
 
