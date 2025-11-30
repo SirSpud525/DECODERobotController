@@ -33,6 +33,8 @@ public class DECODERobot {
     private DcMotor blDrive;
     private DcMotor brDrive;
 
+    public double targetAngle = 0.0;
+
 //    public double slidePower;
 //    private DcMotor leftSlide;
 //    private DcMotor rightSlide;
@@ -47,6 +49,7 @@ public class DECODERobot {
 
     public double bottomSpinnerPower = 0.0;
     public double topSpinnerPower = 0.0;
+
     private CRServo tlSpinner;
     private CRServo trSpinner;
     private CRServo blSpinner;
@@ -91,7 +94,7 @@ public class DECODERobot {
 
         // Reset all motors
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 //        leftSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 //        leftSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 //        rightSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -200,14 +203,14 @@ public class DECODERobot {
         } else {
             setDrivingMode(gp1);
 
-            if(!gp1.y){
+            if (gp1.y) {
+                alignToTag();
+            } else {
                 if (driveMode == DriveMode.NORMAL) {
                     mainDrive(gp1);
                 } else {
                     mainGyroDrive(gp1);
                 }
-            }else{
-                alignToTag(gp1);
             }
 
             spinnerControl(0.0);
@@ -301,43 +304,36 @@ public class DECODERobot {
         mainDrive(actualDrive, turn, actualStrafe, slowDownFactor, speedUpFactor);
     }
 
-    public void alignToTag(Gamepad gp){
-        if (gp.y && camera.currentlyInSight) {
-            setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    public void alignToTag() {
+        double currentPosition = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - 4;
 
-            double target = 0.0;
-
-            if (shootingMode == ShootingMode.HIGH){
-             target = -4.0;
-            }
-
-            double currentPosition = camera.roll;
-            double error = target - currentPosition;
-
-            double kp = 0.5;
-
-            double proportional = error * kp;
-            double turn = proportional / (180);
-            if(Math.abs(error) > 0.5) {
-                flDrivePower = turn;
-                frDrivePower = -turn;
-                blDrivePower = turn;
-                brDrivePower = -turn;
-
-                flDrivePower = (flDrivePower) + (Math.signum(flDrivePower) * 0.1);
-                frDrivePower = (frDrivePower) + (Math.signum(frDrivePower) * 0.1);
-                blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.1);
-                brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.1);
-
-                flDrivePower = flDrivePower * driveSlowdown;
-                frDrivePower = frDrivePower * driveSlowdown;
-                blDrivePower = blDrivePower * driveSlowdown;
-                brDrivePower = brDrivePower * driveSlowdown;
-            }
-        } else {
-            setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        if (camera.currentlyInSight) {
+            targetAngle = currentPosition - camera.roll;
         }
 
+        double error = targetAngle - currentPosition;
+
+        double kp = 1;
+
+        double proportional = error * kp;
+        double turn = proportional / (180);
+
+        if (Math.abs(error) > 0.5) {
+            flDrivePower = -turn;
+            frDrivePower = turn;
+            blDrivePower = -turn;
+            brDrivePower = turn;
+
+            flDrivePower = (flDrivePower) + (Math.signum(flDrivePower) * 0.1);
+            frDrivePower = (frDrivePower) + (Math.signum(frDrivePower) * 0.1);
+            blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.1);
+            brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.1);
+
+            flDrivePower = flDrivePower * driveSlowdown;
+            frDrivePower = frDrivePower * driveSlowdown;
+            blDrivePower = blDrivePower * driveSlowdown;
+            brDrivePower = brDrivePower * driveSlowdown;
+        }
     }
 
 //    public void slideControl(Gamepad gp) {
@@ -392,9 +388,9 @@ public class DECODERobot {
 
         if (gp.right_trigger > 0.2) {
             if (shootingMode == ShootingMode.LOW) {
-                shootControl(0.4);
+                shootControl(0.39);
             } else {
-                shootControl(0.465);
+                shootControl(0.45);
             }
         } else if (gp.left_trigger > 0.2) {
             shootControl(-0.8);
@@ -420,6 +416,7 @@ public class DECODERobot {
             spinnerControl(-1.0, bottomSpinnerPower);
         }
     }
+
     public void spinnerControl(double power) {
         topSpinnerPower = power;
         bottomSpinnerPower = power;
@@ -820,7 +817,8 @@ public class DECODERobot {
     public void sleep(int milliseconds) {
         try {
             Thread.sleep(milliseconds);
-        } catch (InterruptedException _ignored) {}
+        } catch (InterruptedException _ignored) {
+        }
     }
 
 
