@@ -824,13 +824,19 @@ public class DECODERobot {
 
     public double distToVelocity(double theta) {
         //Given theta (The angle at which the artifact shoots at) return the velocity needed to reach the basket
-        double x = odometry.getPosX(DistanceUnit.MM);
-        double y = odometry.getPosY(DistanceUnit.MM);
+        double x = 1000 * odometry.getPosX(DistanceUnit.MM);
+        double y = 1000 * odometry.getPosY(DistanceUnit.MM);
         double dist = Math.sqrt(x * x + y * y);
         double secant = 1 / Math.cos(Math.toRadians(theta));
         double numerator = -9.8 * dist * dist;
         double denominator = 2 * (.9845 - dist * Math.tan(Math.toRadians(theta)));
         return secant * Math.sqrt(numerator / denominator);
+    }
+
+    private double distToPower(double theta){
+        //Given distance to goal, return power nesecary to shoot it in, very abstract
+        int maxRPM = 6000;
+        return 60 * distToVelocity(theta) / (3.1415926 * .05 * maxRPM);
     }
 
     public enum DriveMode {
