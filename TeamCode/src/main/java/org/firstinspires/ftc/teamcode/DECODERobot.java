@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
+
 import com.qualcomm.hardware.bosch.BHI260IMU;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -15,6 +17,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.utils.Camera;
 
 
@@ -62,7 +65,7 @@ public class DECODERobot {
 
     public Camera camera;
 
-    public GoBildaPinpointDriver odometry;
+    public GoBildaPinpointDriver odo;
 
     public DECODERobot(Telemetry robotTelemetry) {
         telemetry = robotTelemetry;
@@ -132,14 +135,14 @@ public class DECODERobot {
         camera = new Camera(hardwareMap.get(WebcamName.class, "Webcam 1"));
 
         //Initializing odometry
-//        odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
-//
-//        odo.setOffsets(37.6, 53.0, DistanceUnit.MM);
-//        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-//        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-//
-//        odo.resetPosAndIMU();
-        //odo.setPosition(new Pose2D(DistanceUnit.MM, -923.925, 1601.47, RADIANS, 0));
+        odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
+
+        odo.setOffsets(70, 315, DistanceUnit.MM);
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+
+        odo.resetPosAndIMU();
+        odo.setPosition(new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 0));
     }
 
     public void updateMotorPowers(int waitAfter) {
@@ -171,26 +174,31 @@ public class DECODERobot {
     }
 
     public void updateTelemetry() {
-        telemetry.addData("FL Drive Power: ", flDrivePower);
-        telemetry.addData("FR Drive Power: ", frDrivePower);
-        telemetry.addData("BL Drive Power: ", blDrivePower);
-        telemetry.addData("BR Drive Power: ", brDrivePower);
-        telemetry.addData("Drive Slowdown: ", driveSlowdown);
-        telemetry.addData("Drive Mode: ", driveMode);
-        telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+//        telemetry.addData("FL Drive Power: ", flDrivePower);
+//        telemetry.addData("FR Drive Power: ", frDrivePower);
+//        telemetry.addData("BL Drive Power: ", blDrivePower);
+//        telemetry.addData("BR Drive Power: ", brDrivePower);
+//        telemetry.addData("Drive Slowdown: ", driveSlowdown);
+//        telemetry.addData("Drive Mode: ", driveMode);
+//        telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
 //        telemetry.addData("Slide Power: ", slidePower);
-        telemetry.addData("Camera: ", camera);
-        telemetry.addData("Intake Power: ", intakePower);
-        telemetry.addData("Shoot Power: ", shootPower);
-        telemetry.addData("Shoot Mode: ", shootingMode);
-        telemetry.addData("Top Spinner Power: ", topSpinnerPower);
-        telemetry.addData("Bottom Spinner Power: ", bottomSpinnerPower);
+//        telemetry.addData("Camera: ", camera);
+//        telemetry.addData("Intake Power: ", intakePower);
+//        telemetry.addData("Shoot Power: ", shootPower);
+//        telemetry.addData("Shoot Mode: ", shootingMode);
+//        telemetry.addData("Top Spinner Power: ", topSpinnerPower);
+//        telemetry.addData("Bottom Spinner Power: ", bottomSpinnerPower);
+        telemetry.addData("PositionX: ", odo.getPosition());
+        telemetry.addData("PositionX: ", odo.getPosition());
+        telemetry.addData("Power for shoots: ", distToPower(45));
+        telemetry.addData("Actual power: ", leftShoot.getPower());
 
         telemetry.update();
     }
 
     public void gamePadPower(Gamepad gp1, Gamepad gp2) {
         camera.update();
+        odo.update();
 
         setLock(gp2);
 
@@ -288,7 +296,7 @@ public class DECODERobot {
     }
 
     public void mainGyroDrive(double drive, double turn, double strafe, double slowDownFactor, double speedUpFactor) {
-        double imuPos = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        double imuPos = imu.getRobotYawPitchRollAngles().getYaw(RADIANS);
 
         double cosine = Math.cos(-imuPos);
         double sine = Math.sin(-imuPos);
@@ -388,7 +396,8 @@ public class DECODERobot {
 
         if (gp.right_trigger > 0.2) {
             if (shootingMode == ShootingMode.LOW) {
-                shootControl(0.39);
+//                shootControl(0.39);
+                shootControl(distToPower(46));
             } else {
                 shootControl(0.45);
             }
@@ -824,13 +833,19 @@ public class DECODERobot {
 
     public double distToVelocity(double theta) {
         //Given theta (The angle at which the artifact shoots at) return the velocity needed to reach the basket
-        double x = odometry.getPosX(DistanceUnit.MM);
-        double y = odometry.getPosY(DistanceUnit.MM);
+        double x = odo.getPosX(DistanceUnit.MM) / 1000 - 1.3;
+        double y = odo.getPosY(DistanceUnit.MM) / 1000;
         double dist = Math.sqrt(x * x + y * y);
         double secant = 1 / Math.cos(Math.toRadians(theta));
         double numerator = -9.8 * dist * dist;
         double denominator = 2 * (.9845 - dist * Math.tan(Math.toRadians(theta)));
         return secant * Math.sqrt(numerator / denominator);
+    }
+
+    public double distToPower(double theta){
+        //Given dist to goal, return power nesecary to shoot it in
+        int maxRPM = 6000;
+        return 60 * distToVelocity(theta) / (3.1415926535 * 0.05 * maxRPM);
     }
 
     public enum DriveMode {
