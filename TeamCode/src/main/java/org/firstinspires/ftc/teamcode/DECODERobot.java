@@ -139,7 +139,7 @@ public class DECODERobot {
 
         odo.setOffsets(70, 315, DistanceUnit.MM);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         odo.resetPosAndIMU();
         odo.setPosition(new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 0));
@@ -179,13 +179,13 @@ public class DECODERobot {
 //        telemetry.addData("BL Drive Power: ", blDrivePower);
 //        telemetry.addData("BR Drive Power: ", brDrivePower);
 //        telemetry.addData("Drive Slowdown: ", driveSlowdown);
-//        telemetry.addData("Drive Mode: ", driveMode);
-//        telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        telemetry.addData("Drive Mode: ", driveMode);
+        telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
 //        telemetry.addData("Slide Power: ", slidePower);
 //        telemetry.addData("Camera: ", camera);
 //        telemetry.addData("Intake Power: ", intakePower);
-//        telemetry.addData("Shoot Power: ", shootPower);
-//        telemetry.addData("Shoot Mode: ", shootingMode);
+        telemetry.addData("Shoot Power: ", shootPower);
+        telemetry.addData("Shoot Mode: ", shootingMode);
 //        telemetry.addData("Top Spinner Power: ", topSpinnerPower);
 //        telemetry.addData("Bottom Spinner Power: ", bottomSpinnerPower);
         telemetry.addData("PositionX: ", odo.getPosition());
@@ -509,24 +509,22 @@ public class DECODERobot {
 
         brake();
 
+        int mm = pos * 10;
         final int DELAY = 20;
+        odo.update();
 
-        while (((Math.abs(pos - flDrive.getCurrentPosition()) + Math.abs(pos - frDrive.getCurrentPosition())) / 2) > 20) {
+        while (Math.abs(mm - odo.getPosY(DistanceUnit.MM)) > 5) {
             // Drive
-            int flDistance = pos - flDrive.getCurrentPosition();
-            int frDistance = pos - frDrive.getCurrentPosition();
-            int blDistance = pos - blDrive.getCurrentPosition();
-            int brDistance = pos - brDrive.getCurrentPosition();
+            double distance = mm - odo.getPosY(DistanceUnit.MM);
 
-            flDrivePower = (double) flDistance / (double) Math.abs(pos);
-            blDrivePower = (double) blDistance / (double) Math.abs(pos);
-            frDrivePower = (double) frDistance / (double) Math.abs(pos);
-            brDrivePower = (double) brDistance / (double) Math.abs(pos);
+            double power = distance / (double) Math.abs(mm);
 
-            flDrivePower = (flDrivePower / slowdown) + (Math.signum(flDrivePower) * 0.1);
-            frDrivePower = (frDrivePower / slowdown) + (Math.signum(frDrivePower) * 0.1);
-            blDrivePower = (blDrivePower / slowdown) + (Math.signum(blDrivePower) * 0.1);
-            brDrivePower = (brDrivePower / slowdown) + (Math.signum(brDrivePower) * 0.1);
+            power = (power / slowdown) + (Math.signum(power) * 0.1);
+
+            flDrivePower = power;
+            frDrivePower = power;
+            blDrivePower = power;
+            brDrivePower = power;
 
             // Slowdown
             flDrivePower = flDrivePower * driveSlowdown;
@@ -535,6 +533,10 @@ public class DECODERobot {
             brDrivePower = brDrivePower * driveSlowdown;
 
             updateMotorPowers();
+            odo.update();
+
+            telemetry.addData("Pos", odo.getPosY(DistanceUnit.MM));
+            telemetry.update();
 
             sleep(DELAY);
         }
@@ -560,19 +562,21 @@ public class DECODERobot {
 
         final int DELAY = 20;
 
-        int flBrPos = pos;
-        int frBlPos = -pos;
+        int mm = 10 * pos;
 
-        while (Math.abs((Math.abs(flBrPos - flDrive.getCurrentPosition()) + Math.abs(frBlPos - frDrive.getCurrentPosition())) / 2) > 20) {
-            int flDistance = flBrPos - flDrive.getCurrentPosition();
-            int frDistance = frBlPos - frDrive.getCurrentPosition();
-            int blDistance = frBlPos - blDrive.getCurrentPosition();
-            int brDistance = flBrPos - brDrive.getCurrentPosition();
+        int flBrPos = mm;
+        int frBlPos = -mm;
 
-            flDrivePower = (double) flDistance / (double) Math.abs(flBrPos);
-            blDrivePower = (double) blDistance / (double) Math.abs(frBlPos);
-            frDrivePower = (double) frDistance / (double) Math.abs(frBlPos);
-            brDrivePower = (double) brDistance / (double) Math.abs(flBrPos);
+        while (Math.abs(mm - odo.getPosX(DistanceUnit.MM)) > 5) {
+            double flDistance = flBrPos - odo.getPosX(DistanceUnit.MM);
+            double frDistance = frBlPos - odo.getPosX(DistanceUnit.MM);
+            double blDistance = frBlPos - odo.getPosX(DistanceUnit.MM);
+            double brDistance = flBrPos - odo.getPosX(DistanceUnit.MM);
+
+            flDrivePower = flDistance / (double) Math.abs(flBrPos);
+            blDrivePower = blDistance / (double) Math.abs(frBlPos);
+            frDrivePower = frDistance / (double) Math.abs(frBlPos);
+            brDrivePower = brDistance / (double) Math.abs(flBrPos);
 
             if (Math.abs(flBrPos - brDrive.getCurrentPosition()) > 100 || Math.abs(flBrPos - flDrive.getCurrentPosition()) > 100) {
                 flDrivePower = Math.signum(flDrivePower);
@@ -618,6 +622,10 @@ public class DECODERobot {
             brDrivePower = brDrivePower * driveSlowdown;
 
             updateMotorPowers();
+            odo.update();
+
+            telemetry.addData("pos", odo.getPosX(DistanceUnit.MM));
+            telemetry.update();
 
             sleep(DELAY);
         }
@@ -843,9 +851,18 @@ public class DECODERobot {
     }
 
     public double distToPower(double theta){
-        //Given dist to goal, return power nesecary to shoot it in
+        //Given dist to goal, return power necessary to shoot it in
         int maxRPM = 6000;
         return 60 * distToVelocity(theta) / (3.1415926535 * 0.05 * maxRPM);
+    }
+
+    public double getTargetAngle(){
+        double xstart = 1.3;
+        double ystart = 0;
+        double x = odo.getPosX(DistanceUnit.MM) / 1000 - xstart;
+        double y = odo.getPosY(DistanceUnit.MM) / 1000 - ystart;
+        targetAngle = Math.atan(y/x);
+        return targetAngle;
     }
 
     public enum DriveMode {

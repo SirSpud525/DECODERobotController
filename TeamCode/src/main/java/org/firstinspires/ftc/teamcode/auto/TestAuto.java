@@ -11,22 +11,14 @@ public class TestAuto extends LinearOpMode {
     DECODERobot robot = new DECODERobot(telemetry);
 
     Camera camera;
-    int passes;
 
     public void runOpMode() throws InterruptedException {
 
         robot.init(hardwareMap);
 
-        camera = new Camera(hardwareMap.get(WebcamName.class, "Webcam 1"));
-
         waitForStart();
 
-        while (passes < 100000){
-            telemetry.clear();
-            telemetry.addData("Pos", camera.toString());
-            telemetry.update();
-            passes++;
-        }
+        robot.strafeTo(100);
 
         stop();
     }
