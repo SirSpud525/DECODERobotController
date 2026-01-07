@@ -142,7 +142,7 @@ public class DECODERobot {
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         odo.resetPosAndIMU();
-        odo.setPosition(new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 0));
+        odo.setPosition(new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 135 * 3.141592653589793238462643383 / 180));
     }
 
     public void updateMotorPowers(int waitAfter) {
@@ -179,19 +179,19 @@ public class DECODERobot {
 //        telemetry.addData("BL Drive Power: ", blDrivePower);
 //        telemetry.addData("BR Drive Power: ", brDrivePower);
 //        telemetry.addData("Drive Slowdown: ", driveSlowdown);
-        telemetry.addData("Drive Mode: ", driveMode);
+//        telemetry.addData("Drive Mode: ", driveMode);
         telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
 //        telemetry.addData("Slide Power: ", slidePower);
 //        telemetry.addData("Camera: ", camera);
 //        telemetry.addData("Intake Power: ", intakePower);
-        telemetry.addData("Shoot Power: ", shootPower);
-        telemetry.addData("Shoot Mode: ", shootingMode);
+//        telemetry.addData("Shoot Power: ", shootPower);
+//        telemetry.addData("Shoot Mode: ", shootingMode);
 //        telemetry.addData("Top Spinner Power: ", topSpinnerPower);
 //        telemetry.addData("Bottom Spinner Power: ", bottomSpinnerPower);
-        telemetry.addData("PositionX: ", odo.getPosition());
-        telemetry.addData("PositionX: ", odo.getPosition());
-        telemetry.addData("Power for shoots: ", distToPower(45));
-        telemetry.addData("Actual power: ", leftShoot.getPower());
+        telemetry.addData("Position: ", odo.getPosition());
+//        telemetry.addData("Power for shoots: ", distToPower(45));
+//        telemetry.addData("Actual power: ", leftShoot.getPower());
+        telemetry.addData("Target angle: ", getTargetAngle(305,305));
 
         telemetry.update();
     }
@@ -856,12 +856,11 @@ public class DECODERobot {
         return 60 * distToVelocity(theta) / (3.1415926535 * 0.05 * maxRPM);
     }
 
-    public double getTargetAngle(){
-        double xstart = 1.3;
-        double ystart = 0;
-        double x = odo.getPosX(DistanceUnit.MM) / 1000 - xstart;
-        double y = odo.getPosY(DistanceUnit.MM) / 1000 - ystart;
-        targetAngle = Math.atan(y/x);
+    public double getTargetAngle(int initialX, int initialY){
+        //returns the angle needed to turn the robot
+        double x = odo.getPosX(DistanceUnit.MM);
+        double y = odo.getPosY(DistanceUnit.MM);
+        targetAngle = 180 * Math.atan((initialY + y)/(initialX + x)) / 3.1415926 - imu.getRobotYawPitchRollAngles().getYaw();
         return targetAngle;
     }
 
