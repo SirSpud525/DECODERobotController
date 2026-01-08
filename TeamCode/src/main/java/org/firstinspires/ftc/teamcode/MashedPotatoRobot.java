@@ -582,24 +582,19 @@ public class MashedPotatoRobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        double xDist = 1000;
-        double yDist = 1000;
+        double Pitch = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES); //makes sure that it strafes relative to the starting IMU pos
+        double angleInRadians = Math.toRadians(degrees + 315 - Pitch); //0 deg, would strafe right, 90 deg would strafe up, etc.
+        double cosValue = Math.cos(angleInRadians);
+        double sinValue = Math.sin(angleInRadians);
+        double yDist = distance * sinValue + odo.getPosY(DistanceUnit.MM);
+        double xDist = distance * cosValue + odo.getPosX(DistanceUnit.MM);
+
         final double error = 100;
         final double slowdown = 1.8;
 
-        while (Math.abs(yDist - frontRight.getCurrentPosition()) > error || Math.abs(xDist - frontLeft.getCurrentPosition()) > error) {
+        while (Math.abs(yDist - odo.getPosY(DistanceUnit.MM)) > error || Math.abs(xDist - odo.getPosX(DistanceUnit.MM)) > error) {
 
-            double Pitch = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES); //makes sure that it strafes relative to the starting IMU pos
-            double angleInRadians = Math.toRadians(degrees + 315 - Pitch); //0 deg, would strafe right, 90 deg would strafe up, etc.
-            double cosValue = Math.cos(angleInRadians);
-            double sinValue = Math.sin(angleInRadians);
-            yDist = distance * sinValue;
-            xDist = distance * cosValue;
-
-            double x = cosValue;
-            double y = sinValue;
-
-            enableAllMotors(x / slowdown, y / slowdown);
+            enableAllMotors(cosValue / slowdown, sinValue / slowdown);
             handleMotorPower();
         }
         drive(0.0);
