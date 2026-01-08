@@ -396,8 +396,8 @@ public class DECODERobot {
 
         if (gp.right_trigger > 0.2) {
             if (shootingMode == ShootingMode.LOW) {
-//                shootControl(0.39);
-                shootControl(distToPower(46));
+                shootControl(0.39);
+//                shootControl(distToPower(46));
             } else {
                 shootControl(0.45);
             }
