@@ -153,6 +153,17 @@ public class MashedPotatoRobot {
         slideLeft.setPower(slideLeftPower);
         slideRight.setPower(slideRightPower);
 
+        lowerLeft.setPower(lowLeftPower);
+        upperLeft.setPower(upLeftPower);
+        lowerRight.setPower(lowRightPower);
+        upperRight.setPower(upRightPower);
+    }
+
+    public void handleMotorPower(int wait) {
+
+        handleMotorPower();
+        sleep(wait);
+
     }
     public void brake() {
         flDrivePower = 0.0;
@@ -747,7 +758,15 @@ public class MashedPotatoRobot {
 public void intakePow(double power){
         intakePower = power;
 }
-    public void donut() {
+
+public void transferPower(double power){
+        upLeftPower = power * -1 ;
+        upRightPower = power;
+        lowLeftPower = power * -1 ;
+        lowRightPower = power ;
+        // This function accepts power as a input and controls it(-1 -> left, 1-> right)
+}
+public void donut() {
 
         double strafe = 1.0;
         double turn = 0.25;
