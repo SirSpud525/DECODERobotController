@@ -28,14 +28,11 @@ public class MashedPotatoRobot {
     Telemetry telemetry;
     final String robotName = "Potato";
     public ElapsedTime driveModeDebounce = new ElapsedTime();
-    private ElapsedTime pushUpDebounce = new ElapsedTime();
     private ElapsedTime lockDebounce = new ElapsedTime();
     public double flDrivePower;
     public double frDrivePower;
     public double brDrivePower;
     public double blDrivePower;
-    public double slideLeftPower;
-    public double slideRightPower;
     public double shootPower;
     public double intakePower;
     public double upLeftPower;
@@ -54,9 +51,8 @@ public class MashedPotatoRobot {
     private DcMotor frontRight;
     private DcMotor backLeft;
     private DcMotor backRight;
-    private DcMotor slideLeft;
-    private DcMotor slideRight;
     private DcMotor shootMotor;
+    private DcMotor shootMotor2;
     private DcMotor intake;
     private CRServo lowerRight;
     private CRServo lowerLeft;
@@ -76,9 +72,9 @@ public class MashedPotatoRobot {
         frontRight = hardwareMap.get(DcMotor.class, "frontRight"); //2
         backLeft = hardwareMap.get(DcMotor.class, "backLeft"); //0
         backRight = hardwareMap.get(DcMotor.class, "backRight"); //1
-        slideLeft = hardwareMap.get(DcMotor.class, "slideLeft");
-        slideRight = hardwareMap.get(DcMotor.class, "slideRight");
         shootMotor = hardwareMap.get(DcMotor.class, "shoot");
+        shootMotor2 = hardwareMap.get(DcMotor.class, "shoot2");
+
         intake = hardwareMap.get(DcMotor.class, "intake");
         lowerLeft = hardwareMap.get(CRServo.class, "lowerLeft");
         lowerRight = hardwareMap.get(CRServo.class, "lowerRight");
@@ -93,12 +89,10 @@ public class MashedPotatoRobot {
         //encoders
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        slideLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        slideRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        slideLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        slideRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shootMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shootMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shootMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shootMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -112,9 +106,8 @@ public class MashedPotatoRobot {
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        slideLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        slideRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         shootMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shootMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Set up the IMU (gyro/angle sensor)
         IMU.Parameters imuParameters = new IMU.Parameters(
@@ -152,12 +145,21 @@ public class MashedPotatoRobot {
         intake.setPower(intakePower);
 
         shootMotor.setPower(shootPower);
+        shootMotor2.setPower(shootPower);
 
-        slideLeft.setPower(slideLeftPower);
-        slideRight.setPower(slideRightPower);
+        lowerLeft.setPower(lowLeftPower);
+        upperLeft.setPower(upLeftPower);
+        lowerRight.setPower(lowRightPower);
+        upperRight.setPower(upRightPower);
+    }
+
+    public void handleMotorPower(int wait) {
+
+        handleMotorPower();
+        sleep(wait);
 
     }
-    public void updateTelemetry() {
+    public void updateTelemetry(Telemetry telemetry) {
 //        telemetry.addData("FL Drive Power: ", flDrivePower);
 //        telemetry.addData("FR Drive Power: ", frDrivePower);
 //        telemetry.addData("BL Drive Power: ", blDrivePower);
@@ -165,7 +167,6 @@ public class MashedPotatoRobot {
 //        telemetry.addData("Drive Slowdown: ", driveSlowdown);
 //        telemetry.addData("Drive Mode: ", driveMode);
         telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
-//        telemetry.addData("Slide Power: ", slidePower);
 //        telemetry.addData("Camera: ", camera);
 //        telemetry.addData("Intake Power: ", intakePower);
 //        telemetry.addData("Shoot Power: ", shootPower);
@@ -254,9 +255,8 @@ public class MashedPotatoRobot {
         if (locked){
             drive(0.0);
             intake.setPower(0.0);
-            slideRight.setPower(-0.2);//set power @ passive power for slides
-            slideLeft.setPower(-0.2);
             shootMotor.setPower(0.0);
+            shootMotor2.setPower(0.0);
         }else {
             if (gyroDrive) {
                 gyroDrive(gp1, telemetry);
@@ -264,9 +264,9 @@ public class MashedPotatoRobot {
                 Driving(gp1, telemetry);
             }
             toggleGyro(gp1);
-//            pushUp(gp2);
-            shooting(gp2);
+            handleShootMotors(gp2);
         }
+        updateTelemetry(telemetry);
     }
     public void setLock(Gamepad gp) {
         if (gp.y) {
@@ -286,31 +286,6 @@ public class MashedPotatoRobot {
             driveModeDebounce.reset();
 
             gyroDrive = !gyroDrive;
-        }
-    }
-    public void pushUp(Gamepad gp2) {
-        //if the toggle is pressed and wasn't recently pressed, switch toggle mode
-        if (gp2.x) {
-            if (pushUpDebounce.milliseconds() < 500) return;
-
-            pushUpDebounce.reset();
-            pushing = !pushing;
-        }
-        //set power based on toggle mode
-        if (pushing) {
-            slideLeft.setPower(0.1);
-            slideRight.setPower(0.1);
-        } else {
-            slideLeft.setPower(0.0);
-            slideRight.setPower(0.0);
-        }
-    }
-    public void shooting(Gamepad gp2){
-        //shoots at full power if right trigger is held down
-        if (gp2.right_trigger > 0.1){
-            shootMotor.setPower(1.0);
-        } else {
-            shootMotor.setPower(0.0);
         }
     }
     public void lowerIntake(Gamepad gp2) {
@@ -368,18 +343,22 @@ public class MashedPotatoRobot {
 
         if(gp2.right_trigger > 0.1) {
             if (shooterState == shooterState.UP) {
-                shootMotor.setPower(0.8); // setting power fo the shoot motto based on what enum is used - Saumya
+                shootMotor.setPower(0.8); // setting power fo the shoot motor based on what enum is used - Saumya
+                shootMotor2.setPower(0.8);
             }
             if (shooterState == shooterState.DOWN) {
                 shootMotor.setPower(0.6);
+                shootMotor2.setPower(0.6);
             }
             if (shooterState == shooterState.MANUAL) {
                 shootMotor.setPower(manualPower);
+                shootMotor2.setPower(manualPower);
             }
 
         }
         else {
             shootMotor.setPower(0); //setting power to 0 simple - Saumya
+            shootMotor2.setPower(0.0);
         }
 
         if (gp2.left_bumper == true){
@@ -852,7 +831,19 @@ public class MashedPotatoRobot {
 public void intakePow(double power){
         intakePower = power;
 }
-    public void donut() {
+
+public void transferPower(double power){
+        upLeftPower = power * -1 ;
+        upRightPower = power;
+        lowLeftPower = power * -1 ;
+        lowRightPower = power ;
+        // This function accepts power as a input and controls it(-1 -> left, 1-> right)
+}
+public void setShootPower(int variableA){
+        shootPower = variableA;
+}
+
+public void donut() {
 
         double strafe = 1.0;
         double turn = 0.25;
