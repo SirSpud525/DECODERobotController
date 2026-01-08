@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
@@ -24,7 +25,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class MashedPotatoRobot {
 
 //GLOBAL VARIABLES AND INIT
-
+    Telemetry telemetry;
     final String robotName = "Potato";
     public ElapsedTime driveModeDebounce = new ElapsedTime();
     private ElapsedTime pushUpDebounce = new ElapsedTime();
@@ -45,6 +46,7 @@ public class MashedPotatoRobot {
     public boolean pushing = false;
     public boolean locked = false;
     public shooterStates shooterState = shooterStates.UP;
+    public double targetAngle = 0.0;
 
     public double manualPower = 0.5;
 
@@ -125,20 +127,21 @@ public class MashedPotatoRobot {
         imu.initialize(imuParameters);
 
         this.imu.resetYaw();
-
         //Initializing odometry
-//        odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
-//
-//        odo.setOffsets(37.6, 53.0, DistanceUnit.MM);
-//        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-//        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-//
-//        odo.resetPosAndIMU();
-        //odo.setPosition(new Pose2D(DistanceUnit.MM, -923.925, 1601.47, RADIANS, 0));
+        odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
+
+        odo.setOffsets(70, 315, DistanceUnit.MM);
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+
+        setOdo(0, 0, 45);
     }
 
     //UTILITY FUNCTIONS
-
+    public void setOdo(int initialX, int initialY, int initialDir){
+        odo.resetPosAndIMU();
+        odo.setPosition(new Pose2D(DistanceUnit.MM, initialX, initialY, DEGREES, initialDir));
+    }
     public void handleMotorPower() {
 
         frontLeft.setPower(flDrivePower);
@@ -164,6 +167,28 @@ public class MashedPotatoRobot {
         handleMotorPower();
         sleep(wait);
 
+    }
+    public void updateTelemetry() {
+//        telemetry.addData("FL Drive Power: ", flDrivePower);
+//        telemetry.addData("FR Drive Power: ", frDrivePower);
+//        telemetry.addData("BL Drive Power: ", blDrivePower);
+//        telemetry.addData("BR Drive Power: ", brDrivePower);
+//        telemetry.addData("Drive Slowdown: ", driveSlowdown);
+//        telemetry.addData("Drive Mode: ", driveMode);
+        telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+//        telemetry.addData("Slide Power: ", slidePower);
+//        telemetry.addData("Camera: ", camera);
+//        telemetry.addData("Intake Power: ", intakePower);
+//        telemetry.addData("Shoot Power: ", shootPower);
+//        telemetry.addData("Shoot Mode: ", shootingMode);
+//        telemetry.addData("Top Spinner Power: ", topSpinnerPower);
+//        telemetry.addData("Bottom Spinner Power: ", bottomSpinnerPower);
+        telemetry.addData("Position: ", odo.getPosition());
+//        telemetry.addData("Power for shoots: ", distToPower(45));
+//        telemetry.addData("Actual power: ", leftShoot.getPower());
+        telemetry.addData("Target angle: ", getTargetAngle(305,305));
+
+        telemetry.update();
     }
     public void brake() {
         flDrivePower = 0.0;
@@ -209,6 +234,13 @@ public class MashedPotatoRobot {
         double v = distToVelocity(45.0);
         double RPM = 60 * v / (3.1415926 * 2 * .062);
         return RPM / 6000; //Returns RPM needed divided by max RPM
+    }
+    public double getTargetAngle(int initialX, int initialY){
+        //returns the angle needed to turn the robot
+        double x = odo.getPosX(DistanceUnit.MM);
+        double y = odo.getPosY(DistanceUnit.MM);
+        targetAngle = 180 * Math.atan((initialY + y)/(initialX + x)) / 3.1415926 - imu.getRobotYawPitchRollAngles().getYaw();
+        return targetAngle;
     }
     private void setDriveMode(final DcMotor.RunMode mode) {
         frontLeft.setMode(mode);
@@ -422,6 +454,9 @@ public class MashedPotatoRobot {
         double imuPos = (imu.getRobotYawPitchRollAngles().getYaw(RADIANS));
         telemetry.addData("IMU-Angle", imuPos);
 
+        //return target angle
+        telemetry.addData("Target angle: ", getTargetAngle(305,305));
+
         //math - uses trig functions to find the power for each motor
         double change = Math.cos(-imuPos);
         double sine = Math.sin(-imuPos);
@@ -462,6 +497,88 @@ public class MashedPotatoRobot {
     }
 
     //AUTO FUNCTIONS
+    public void strafeTo(int pos) {
+        double targetAngle = 0;
+
+        double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double errorAngle = targetAngle - currentAngle;
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        brake();
+
+        final int DELAY = 20;
+
+        int mm = 10 * pos;
+
+        int flBrPos = mm;
+        int frBlPos = -mm;
+
+        while (Math.abs(mm - odo.getPosX(DistanceUnit.MM)) > 5) {
+            double flDistance = flBrPos - odo.getPosX(DistanceUnit.MM);
+            double frDistance = frBlPos - odo.getPosX(DistanceUnit.MM);
+            double blDistance = frBlPos - odo.getPosX(DistanceUnit.MM);
+            double brDistance = flBrPos - odo.getPosX(DistanceUnit.MM);
+
+            flDrivePower = flDistance / (double) Math.abs(flBrPos);
+            blDrivePower = blDistance / (double) Math.abs(frBlPos);
+            frDrivePower = frDistance / (double) Math.abs(frBlPos);
+            brDrivePower = brDistance / (double) Math.abs(flBrPos);
+
+            if (Math.abs(flBrPos - backRight.getCurrentPosition()) > 100 || Math.abs(flBrPos - frontLeft.getCurrentPosition()) > 100) {
+                flDrivePower = Math.signum(flDrivePower);
+                frDrivePower = Math.signum(frDrivePower);
+                blDrivePower = Math.signum(blDrivePower);
+                brDrivePower = Math.signum(brDrivePower);
+            } else {
+                flDrivePower = (flDrivePower) + (Math.signum(flDrivePower) * 0.15);
+                frDrivePower = (frDrivePower) + (Math.signum(frDrivePower) * 0.15);
+                blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.15);
+                brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.15);
+            }
+
+            // Correct angle
+            currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            errorAngle = targetAngle - currentAngle;
+
+            double kp = 1;
+
+            double proportional = errorAngle * kp;
+
+            double turn = proportional / 180;
+
+            double flDrivePowerCorrection = -turn;
+            double frDrivePowerCorrection = turn;
+            double blDrivePowerCorrection = -turn;
+            double brDrivePowerCorrection = turn;
+
+            flDrivePowerCorrection = (flDrivePowerCorrection / 2) + (Math.signum(flDrivePowerCorrection) * 0.1);
+            frDrivePowerCorrection = (frDrivePowerCorrection / 2) + (Math.signum(frDrivePowerCorrection) * 0.1);
+            blDrivePowerCorrection = (blDrivePowerCorrection / 2) + (Math.signum(blDrivePowerCorrection) * 0.1);
+            brDrivePowerCorrection = (brDrivePowerCorrection / 2) + (Math.signum(brDrivePowerCorrection) * 0.1);
+
+            flDrivePower += flDrivePowerCorrection;
+            frDrivePower += frDrivePowerCorrection;
+            blDrivePower += blDrivePowerCorrection;
+            brDrivePower += brDrivePowerCorrection;
+
+            handleMotorPower();
+            odo.update();
+
+            telemetry.addData("pos", odo.getPosX(DistanceUnit.MM));
+            telemetry.update();
+
+            sleep(DELAY);
+        }
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
 
     private void enableAllMotors(final double p1, final double p2) {
         //abstraction, sets power to the TL & BR motors for p1, and TR & BL motors for p2
@@ -579,51 +696,44 @@ public class MashedPotatoRobot {
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    public void driveTo(final int pos) {
-        //Drives pos distance
+    public void driveTo(int pos, double slowdown) {
         if (pos == 0) return;
+
+        brake();
 
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        final int delay = 20;
-        final int THRESHOLD = 35;
-        double ADDITIONAL_SPEED;
+        brake();
 
-        if (pos >= 0) {
-            ADDITIONAL_SPEED = 0.1;
-        } else {
-            ADDITIONAL_SPEED = -0.1;
-        }
+        int mm = pos * 10;
+        final int DELAY = 20;
+        odo.update();
 
-        while (Math.abs(pos - frontLeft.getCurrentPosition()) > THRESHOLD || Math.abs(pos - frontRight.getCurrentPosition()) > THRESHOLD) {
-            int flDistance = pos - frontLeft.getCurrentPosition();
-            int frDistance = pos - frontRight.getCurrentPosition();
-            int blDistance = pos - backLeft.getCurrentPosition();
-            int brDistance = pos - backRight.getCurrentPosition();
+        while (Math.abs(mm - odo.getPosY(DistanceUnit.MM)) > 5) {
+            // Drive
+            double distance = mm - odo.getPosY(DistanceUnit.MM);
 
-            ADDITIONAL_SPEED = (flDistance / Math.abs(flDistance)) * 0.1;
+            double power = distance / (double) Math.abs(mm);
 
+            power = (power / slowdown) + (Math.signum(power) * 0.1);
 
-            flDrivePower = (double) flDistance / (double) Math.abs(pos);
-            blDrivePower = (double) blDistance / (double) Math.abs(pos);
-            frDrivePower = (double) frDistance / (double) Math.abs(pos);
-            brDrivePower = (double) brDistance / (double) Math.abs(pos);
-
-            flDrivePower = flDrivePower / 3 + ADDITIONAL_SPEED;
-            frDrivePower = frDrivePower / 3 + ADDITIONAL_SPEED;
-            blDrivePower = blDrivePower / 3 + ADDITIONAL_SPEED;
-            brDrivePower = brDrivePower / 3 + ADDITIONAL_SPEED;
+            flDrivePower = power;
+            frDrivePower = power;
+            blDrivePower = power;
+            brDrivePower = power;
 
             handleMotorPower();
+            odo.update();
 
-            try {
-                Thread.sleep(delay);
-            } catch (InterruptedException e) {
-            }
+
+            sleep(DELAY);
         }
 
-        drive(0.0);
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     public void turn(double target) {
