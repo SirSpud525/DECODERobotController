@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 
 import com.qualcomm.hardware.bosch.BHI260IMU;
@@ -180,7 +181,7 @@ public class DECODERobot {
 //        telemetry.addData("BR Drive Power: ", brDrivePower);
 //        telemetry.addData("Drive Slowdown: ", driveSlowdown);
 //        telemetry.addData("Drive Mode: ", driveMode);
-        telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(DEGREES));
 //        telemetry.addData("Slide Power: ", slidePower);
 //        telemetry.addData("Camera: ", camera);
 //        telemetry.addData("Intake Power: ", intakePower);
@@ -313,7 +314,7 @@ public class DECODERobot {
     }
 
     public void alignToTag() {
-        double currentPosition = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - 4;
+        double currentPosition = imu.getRobotYawPitchRollAngles().getYaw(DEGREES) - 4;
 
         if (camera.currentlyInSight) {
             targetAngle = currentPosition - camera.roll;
@@ -550,7 +551,7 @@ public class DECODERobot {
     public void strafeTo(int pos) {
         double targetAngle = 0;
 
-        double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
         double errorAngle = targetAngle - currentAngle;
 
         brake();
@@ -591,7 +592,7 @@ public class DECODERobot {
             }
 
             // Correct angle
-            currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
             errorAngle = targetAngle - currentAngle;
 
             double kp = 1;
@@ -635,11 +636,67 @@ public class DECODERobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
+    public void odoDriveStrafe(int xPos, int yPos){
+        brake();
 
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        brake();
+
+        int xmm = xPos * 10;
+        int ymm = yPos * 10;
+        final int delay = 20;
+        double error = 5.0;
+        odo.update();
+
+        while (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error ){
+            // Drive
+            double xDist = xmm - odo.getPosX(DistanceUnit.MM);
+            double yDist = xmm - odo.getPosY(DistanceUnit.MM);
+
+            double drivePwr = xDist / (double) Math.abs(xmm);
+            double strafePwr = yDist / (double) Math.abs(ymm);
+
+            if (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error) {
+                drivePwr = drivePwr + (Math.signum(drivePwr) * 0.1);
+            }
+            if (Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error) {
+                strafePwr = strafePwr + (Math.signum(strafePwr) * 0.1);
+            }
+            drivePwr = drivePwr/1.5;
+
+            flDrivePower = drivePwr + strafePwr;
+            frDrivePower = drivePwr - strafePwr;
+            blDrivePower = drivePwr - strafePwr;
+            brDrivePower = drivePwr + strafePwr;
+
+            // Slowdown
+            flDrivePower = flDrivePower * driveSlowdown;
+            frDrivePower = frDrivePower * driveSlowdown;
+            blDrivePower = blDrivePower * driveSlowdown;
+            brDrivePower = brDrivePower * driveSlowdown;
+
+            updateMotorPowers();
+            odo.update();
+
+            telemetry.addData("xPos", odo.getPosX(DistanceUnit.MM));
+            telemetry.addData("yPos", odo.getPosY(DistanceUnit.MM));
+            telemetry.update();
+
+            sleep(delay);
+        }
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+    }
     public void driveAndStrafe(int drivePos, int strafePos) {
         double targetAngle = 0;
 
-        double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
         double errorAngle = targetAngle - currentAngle;
 
         brake();
@@ -671,7 +728,7 @@ public class DECODERobot {
             brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.15);
 
             // Correct angle
-            currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
             errorAngle = targetAngle - currentAngle;
 
             double kp = 1;
@@ -712,11 +769,39 @@ public class DECODERobot {
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
+    public void angularStrafe(int degrees, int distance) {
+        //Strafes the robot distance in "degrees" direction
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        double angleInRadians = Math.toRadians(degrees + 315); //0 deg, would strafe right, 90 deg would strafe up, etc.
+        double cosValue = Math.cos(angleInRadians);
+        double sinValue = Math.sin(angleInRadians);
+        double yDist = distance * sinValue + odo.getPosY(DistanceUnit.MM);
+        double xDist = distance * cosValue + odo.getPosX(DistanceUnit.MM);
+
+        final double error = 100;
+        final double slowdown = 1.8;
+
+        while (Math.abs(yDist - odo.getPosY(DistanceUnit.MM)) > error || Math.abs(xDist - odo.getPosX(DistanceUnit.MM)) > error) {
+
+            enableAllMotors(cosValue / 1.5, sinValue);
+            updateMotorPowers();
+        }
+
+    }
+    private void enableAllMotors(final double p1, final double p2) {
+        //abstraction, sets power to the TL & BR motors for p1, and TR & BL motors for p2
+        frDrivePower = p2;
+        brDrivePower = p1;
+        flDrivePower = p1;
+        blDrivePower = p2;
+    }
     public void turnToFromHere(double target) {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        double currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
         double error = target - currentPosition;
 
         double kp = 1;
@@ -724,7 +809,7 @@ public class DECODERobot {
         final int DELAY = 50;
 
         while (Math.abs(error) > 3) {
-            currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
             error = target - currentPosition;
 
             double proportional = error * kp;
@@ -765,7 +850,7 @@ public class DECODERobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        double currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
         double error = target - currentPosition;
 
         double kp = 1;
@@ -773,7 +858,7 @@ public class DECODERobot {
         final int DELAY = 50;
 
         while (Math.abs(error) > 1) {
-            currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
             error = target - currentPosition;
 
             double proportional = error * kp;
