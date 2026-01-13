@@ -143,7 +143,8 @@ public class DECODERobot {
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         odo.resetPosAndIMU();
-        odo.setPosition(new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 135 * 3.141592653589793238462643383 / 180));
+        odo.setPosition(new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 0));
+        //135 * 3.141592653589793238462643383 / 180
     }
 
     public void updateMotorPowers(int waitAfter) {
@@ -664,7 +665,7 @@ public class DECODERobot {
             if (Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error) {
                 strafePwr = strafePwr + (Math.signum(strafePwr) * 0.1);
             }
-            drivePwr = drivePwr/1.5;
+//            drivePwr = drivePwr/1.5;
 
             flDrivePower = drivePwr + strafePwr;
             frDrivePower = drivePwr - strafePwr;
