@@ -5,8 +5,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.utils.Camera;
 import org.firstinspires.ftc.teamcode.DECODERobot;
 
-@Autonomous(name = "ParkFromFrontBlue", group = "Auto")
-public class ParkFromFrontBlue extends LinearOpMode {
+@Autonomous(name = "BigTriangleRed", group = "Auto")
+public class BigTriangleRed extends LinearOpMode {
     DECODERobot robot = new DECODERobot(telemetry);
 
     Camera camera;
@@ -16,25 +16,43 @@ public class ParkFromFrontBlue extends LinearOpMode {
         robot.init(hardwareMap);
 
         waitForStart();
-//        robot.slideControl(0.2);
-        robot.updateMotorPowers(500);
-        robot.driveTo(-310, 2);
-        robot.turnToFromHere(28);
 
-        robot.shootControl(0.45);
-        robot.updateMotorPowers(5500);
-        robot.spinnerControl(1.0);
+        shootAgain();
+
+        stop();
+    }
+    public void shootAgain() // after the robot shoots its already equipped 3 artifacts, it picks up 3 more that are nearby
+    {
+        robot.turnTo(135);
         robot.intakeControl(1.0);
+        robot.updateMotorPowers();
+        robot.driveTo(1200,2);
+        robot.sleep(500);
+        robot.driveTo(-1200, 1.5);
+        robot.turnTo(-135);
+        robot.intakeControl(0);
+        robot.updateMotorPowers();
+//        shootPower();
+
+    }
+
+    public void shootPower(){
+
+        robot.shootControl(0.38);
+        robot.updateMotorPowers(5500);
+        robot.intakeControl(1.0);
+        robot.spinnerControl(1.0);
         robot.updateMotorPowers(600);
 
-        robot.spinnerControl(0.0);
         robot.intakeControl(0.0);
-        robot.updateMotorPowers(2500);
-        robot.spinnerControl(1.0);
-        robot.intakeControl(1.0);
+        robot.spinnerControl(0.0);
         robot.updateMotorPowers(2500);
 
-        // move
+        robot.intakeControl(1.0);
+        robot.spinnerControl(1.0);
+        robot.updateMotorPowers(1000);
+
+// move
         double power = -1.0;
         for (int i = 0; i < 10; i++) {
             robot.spinnerControl(power);
@@ -48,16 +66,25 @@ public class ParkFromFrontBlue extends LinearOpMode {
 
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
-        robot.updateMotorPowers(5700);
+        robot.updateMotorPowers(2500);
 
         robot.intakeControl(0.0);
         robot.intakeControl(0.0);
         robot.shootControl(0.0);
         robot.updateMotorPowers();
-        robot.turnToFromHere(0);
-        robot.driveTo(-800, 2);
 
-        stop();
     }
-}
 
+
+
+    // move
+//        double power = -1.0;
+//        for (int i = 0; i < 10; i++) {
+//            robot.spinnerControl(power);
+//            robot.updateMotorPowers(100);
+//            power *= -1;
+//        }
+
+
+
+}

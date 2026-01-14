@@ -6,8 +6,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.DECODERobot;
 import org.firstinspires.ftc.teamcode.utils.Camera;
 
-@Autonomous(name = "ParkFromBackBlue", group = "Auto")
-public class ParkFromBackBlue extends LinearOpMode {
+@Autonomous(name = "BigTriangleBlue", group = "Auto")
+public class BigTriangleBlue extends LinearOpMode {
     DECODERobot robot = new DECODERobot(telemetry);
 
     Camera camera;

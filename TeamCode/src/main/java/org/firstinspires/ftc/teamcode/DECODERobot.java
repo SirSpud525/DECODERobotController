@@ -138,7 +138,7 @@ public class DECODERobot {
         //Initializing odometry
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
 
-        odo.setOffsets(70, 315, DistanceUnit.MM);
+        odo.setOffsets(0, 0, DistanceUnit.MM);//was 70, 315
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
@@ -398,10 +398,10 @@ public class DECODERobot {
 
         if (gp.right_trigger > 0.2) {
             if (shootingMode == ShootingMode.LOW) {
-                shootControl(0.39);
+                shootControl(0.6);
 //                shootControl(distToPower(46));
             } else {
-                shootControl(0.45);
+                shootControl(0.75);
             }
         } else if (gp.left_trigger > 0.2) {
             shootControl(-0.8);
@@ -502,6 +502,52 @@ public class DECODERobot {
     }
 
     public void driveTo(int pos, double slowdown) {
+        if (pos == 0) return;
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        brake();
+
+        final int DELAY = 20;
+
+        while (((Math.abs(pos - flDrive.getCurrentPosition()) + Math.abs(pos - frDrive.getCurrentPosition())) / 2) > 20) {
+            // Drive
+            int flDistance = pos - flDrive.getCurrentPosition();
+            int frDistance = pos - frDrive.getCurrentPosition();
+            int blDistance = pos - blDrive.getCurrentPosition();
+            int brDistance = pos - brDrive.getCurrentPosition();
+
+            flDrivePower = (double) flDistance / (double) Math.abs(pos);
+            blDrivePower = (double) blDistance / (double) Math.abs(pos);
+            frDrivePower = (double) frDistance / (double) Math.abs(pos);
+            brDrivePower = (double) brDistance / (double) Math.abs(pos);
+
+            flDrivePower = (flDrivePower / slowdown) + (Math.signum(flDrivePower) * 0.1);
+            frDrivePower = (frDrivePower / slowdown) + (Math.signum(frDrivePower) * 0.1);
+            blDrivePower = (blDrivePower / slowdown) + (Math.signum(blDrivePower) * 0.1);
+            brDrivePower = (brDrivePower / slowdown) + (Math.signum(brDrivePower) * 0.1);
+
+            // Slowdown
+            flDrivePower = flDrivePower * driveSlowdown;
+            frDrivePower = frDrivePower * driveSlowdown;
+            blDrivePower = blDrivePower * driveSlowdown;
+            brDrivePower = brDrivePower * driveSlowdown;
+
+            updateMotorPowers();
+
+            sleep(DELAY);
+        }
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    public void setY(int pos, double slowdown) {
         if (pos == 0) return;
 
         brake();
