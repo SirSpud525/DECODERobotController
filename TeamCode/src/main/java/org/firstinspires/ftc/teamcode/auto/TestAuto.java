@@ -18,7 +18,9 @@ public class TestAuto extends LinearOpMode {
 
         waitForStart();
 
-        robot.odoDriveStrafe(100, 100);
+        robot.odoDriveStrafe(90, 90);
+
+//        robot.driveTo(120, 4);
 
         stop();
     }

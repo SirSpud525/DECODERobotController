@@ -647,8 +647,8 @@ public class DECODERobot {
 
         int xmm = xPos * 10;
         int ymm = yPos * 10;
-        final int delay = 20;
-        double error = 5.0;
+        final int delay = 10;
+        double error = 20.0;
         odo.update();
 
         while (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error ){
@@ -656,14 +656,22 @@ public class DECODERobot {
             double xDist = xmm - odo.getPosX(DistanceUnit.MM);
             double yDist = xmm - odo.getPosY(DistanceUnit.MM);
 
-            double drivePwr = xDist / (double) Math.abs(xmm);
-            double strafePwr = yDist / (double) Math.abs(ymm);
+            double drivePwr = yDist / (double) Math.abs(ymm);
+            double strafePwr = xDist / (double) Math.abs(xmm);
 
             if (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error) {
-                drivePwr = drivePwr + (Math.signum(drivePwr) * 0.1);
+                if (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error + 20){
+                    drivePwr = drivePwr + (Math.signum(drivePwr) * 0.1);
+                } else{
+                    drivePwr = drivePwr + (Math.signum(drivePwr) * 0.05);
+                }
             }
             if (Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error) {
-                strafePwr = strafePwr + (Math.signum(strafePwr) * 0.1);
+                if (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error + 20) {
+                    strafePwr = strafePwr + (Math.signum(strafePwr) * 0.1);
+                } else {
+                    strafePwr = strafePwr + (Math.signum(strafePwr) * 0.05);
+                }
             }
 //            drivePwr = drivePwr/1.5;
 
@@ -673,10 +681,10 @@ public class DECODERobot {
             brDrivePower = drivePwr + strafePwr;
 
             // Slowdown
-            flDrivePower = flDrivePower * driveSlowdown;
-            frDrivePower = frDrivePower * driveSlowdown;
-            blDrivePower = blDrivePower * driveSlowdown;
-            brDrivePower = brDrivePower * driveSlowdown;
+//            flDrivePower = flDrivePower / driveSlowdown;
+//            frDrivePower = frDrivePower / driveSlowdown;
+//            blDrivePower = blDrivePower / driveSlowdown;
+//            brDrivePower = brDrivePower / driveSlowdown;
 
             updateMotorPowers();
             odo.update();
