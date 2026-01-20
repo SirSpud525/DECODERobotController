@@ -46,7 +46,7 @@ public class DECODERobot {
     public double intakePower;
     private DcMotor intake;
 
-    public ShootingMode shootingMode = ShootingMode.HIGH;
+    public ShootingMode shootingMode = ShootingMode.LOW;
     public double shootPower;
     private DcMotor leftShoot;
     private DcMotor rightShoot;
@@ -683,7 +683,7 @@ public class DECODERobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
-    public void odoDriveStrafe(int xPos, int yPos){
+    public void setCoords(int xPos, int yPos){
         brake();
 
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -694,7 +694,8 @@ public class DECODERobot {
         int xmm = xPos * 10;
         int ymm = yPos * 10;
         final int delay = 10;
-        double error = 20.0;
+        double error = 25.0;
+        double errorButMore = 250.0 + error;
         odo.update();
 
         while (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error ){
@@ -706,25 +707,42 @@ public class DECODERobot {
             double strafePwr = xDist / (double) Math.abs(xmm);
 
             if (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error) {
-                if (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error + 20){
-                    drivePwr = drivePwr + (Math.signum(drivePwr) * 0.1);
-                } else{
-                    drivePwr = drivePwr + (Math.signum(drivePwr) * 0.05);
-                }
+                    drivePwr = drivePwr + ((Math.signum(drivePwr) * 0.2));
+            } else {
+                drivePwr = 0.0;
+                strafePwr = (strafePwr * 2) + 0.2;
             }
             if (Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error) {
-                if (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error + 20) {
-                    strafePwr = strafePwr + (Math.signum(strafePwr) * 0.1);
-                } else {
-                    strafePwr = strafePwr + (Math.signum(strafePwr) * 0.05);
-                }
+                    strafePwr = strafePwr + ((Math.signum(strafePwr) * 0.2));
+            } else {
+                strafePwr = 0.0;
+                drivePwr = drivePwr * 2;
             }
-//            drivePwr = drivePwr/1.5;
 
-            flDrivePower = drivePwr + strafePwr;
-            frDrivePower = drivePwr - strafePwr;
-            blDrivePower = drivePwr - strafePwr;
-            brDrivePower = drivePwr + strafePwr;
+            if (Math.abs(xDist) > errorButMore){
+                drivePwr = 1.2 * Math.signum(yDist);
+            }
+            if (Math.abs(yDist) > errorButMore){
+                strafePwr = 1.2 * Math.signum(xDist);
+            }
+
+            double angle = odo.getHeading(RADIANS);
+
+            double cosine = Math.cos(-angle);
+            double sine = Math.sin(-angle);
+
+            double driveCos = cosine * drivePwr;
+            double driveSin = sine * drivePwr;
+            double strafeCos = cosine * strafePwr;
+            double strafeSin = sine * strafePwr;
+
+            drivePwr = (driveCos + strafeSin) / 1.25;
+            strafePwr = (strafeCos - driveSin);
+
+            flDrivePower = (drivePwr + strafePwr) / 1.5;
+            frDrivePower = (drivePwr - strafePwr) / 1.5;
+            blDrivePower = (drivePwr - strafePwr) / 1.5;
+            brDrivePower = (drivePwr + strafePwr) / 1.5;
 
             // Slowdown
 //            flDrivePower = flDrivePower / driveSlowdown;
@@ -735,6 +753,14 @@ public class DECODERobot {
             updateMotorPowers();
             odo.update();
 
+            telemetry.addData("angleOffset", angle * 180/3.14);
+            telemetry.addData("heading", odo.getHeading(DEGREES));
+            telemetry.addData("flDrive", flDrivePower);
+            telemetry.addData("blDrive", blDrivePower);
+            telemetry.addData("frDrive", frDrivePower);
+            telemetry.addData("brDrive", brDrivePower);
+            telemetry.addData("drivePwr", drivePwr);
+            telemetry.addData("strafePwr", strafePwr);
             telemetry.addData("xPos", odo.getPosX(DistanceUnit.MM));
             telemetry.addData("yPos", odo.getPosY(DistanceUnit.MM));
             telemetry.update();

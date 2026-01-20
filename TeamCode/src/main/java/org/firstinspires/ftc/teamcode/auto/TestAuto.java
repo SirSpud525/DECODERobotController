@@ -18,9 +18,9 @@ public class TestAuto extends LinearOpMode {
 
         waitForStart();
 
-//        robot.odoDriveStrafe(90, 90);
-
-        robot.setY(90, 2);
+//        robot.turnTo(-45);
+        robot.setCoords(90, 90);
+//        robot.turnTo(45);
 
         stop();
     }
