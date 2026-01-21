@@ -16,31 +16,42 @@ public class SmallTriangleBlue extends LinearOpMode {
         robot.init(hardwareMap);
 
         waitForStart();
-//        robot.slideControl(0.2);
-        robot.updateMotorPowers(500);
+        robot.setOffsets(1640, 425, 180);
+        robot.updateMotorPowers(250);
         robot.driveTo(-310, 2);
         robot.turnToFromHere(28);
 
+        shoot();
+
+        robot.turnToFromHere(0);
+        robot.driveTo(-800, 2);
+
+        stop();
+    }
+
+    public void shoot(){
+
         robot.shootControl(0.45);
-        robot.updateMotorPowers(5500);
+        robot.updateMotorPowers(5750);
         robot.spinnerControl(1.0);
         robot.intakeControl(1.0);
         robot.updateMotorPowers(600);
 
         robot.spinnerControl(0.0);
         robot.intakeControl(0.0);
-        robot.updateMotorPowers(2500);
+        robot.updateMotorPowers(1800);
+
         robot.spinnerControl(1.0);
         robot.intakeControl(1.0);
-        robot.updateMotorPowers(2500);
+        robot.updateMotorPowers(1200);
 
         // move
-        double power = -1.0;
-        for (int i = 0; i < 10; i++) {
-            robot.spinnerControl(power);
-            robot.updateMotorPowers(100);
-            power *= -1;
-        }
+//        double power = -1.0;
+//        for (int i = 0; i < 10; i++) {
+//            robot.spinnerControl(power);
+//                robot.updateMotorPowers(100);
+//            power *= -1;
+//        }
 
         robot.intakeControl(0.0);
         robot.spinnerControl(0.0);
@@ -48,16 +59,15 @@ public class SmallTriangleBlue extends LinearOpMode {
 
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
-        robot.updateMotorPowers(5700);
+        robot.updateMotorPowers(3000);
 
         robot.intakeControl(0.0);
         robot.intakeControl(0.0);
         robot.shootControl(0.0);
         robot.updateMotorPowers();
-        robot.turnToFromHere(0);
-        robot.driveTo(-800, 2);
 
-        stop();
     }
+
+
 }
 

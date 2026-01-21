@@ -315,16 +315,16 @@ public class DECODERobot {
     }
 
     public void alignToTag() {
-        double desiredAngle = Math.atan((odo.getPosX(DistanceUnit.CM)-20)/(346-odo.getPosY(DistanceUnit.CM)));
+        double targetAngle = -Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 7)/(346-odo.getPosY(DistanceUnit.CM))));
 
-        double error = targetAngle - odo.getHeading(RADIANS);
+        double error = (targetAngle - odo.getHeading(RADIANS)) * (180 / Math.PI);
 
         double kp = 1;
 
         double proportional = error * kp;
         double turn = proportional / (180);
 
-        if (Math.abs(error) > 0.5) {
+        if (Math.abs(error) > 0.25) {
             flDrivePower = -turn;
             frDrivePower = turn;
             blDrivePower = -turn;
@@ -339,6 +339,8 @@ public class DECODERobot {
             frDrivePower = frDrivePower * driveSlowdown;
             blDrivePower = blDrivePower * driveSlowdown;
             brDrivePower = brDrivePower * driveSlowdown;
+        } else {
+            brake();
         }
     }
 
@@ -594,8 +596,90 @@ public class DECODERobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
-
     public void strafeTo(int pos) {
+        double targetAngle = 0;
+
+        double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double errorAngle = targetAngle - currentAngle;
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        brake();
+
+        final int DELAY = 20;
+
+        int flBrPos = pos;
+        int frBlPos = -pos;
+
+        while (Math.abs((Math.abs(flBrPos - flDrive.getCurrentPosition()) + Math.abs(frBlPos - frDrive.getCurrentPosition())) / 2) > 20) {
+            int flDistance = flBrPos - flDrive.getCurrentPosition();
+            int frDistance = frBlPos - frDrive.getCurrentPosition();
+            int blDistance = frBlPos - blDrive.getCurrentPosition();
+            int brDistance = flBrPos - brDrive.getCurrentPosition();
+
+            flDrivePower = (double) flDistance / (double) Math.abs(flBrPos);
+            blDrivePower = (double) blDistance / (double) Math.abs(frBlPos);
+            frDrivePower = (double) frDistance / (double) Math.abs(frBlPos);
+            brDrivePower = (double) brDistance / (double) Math.abs(flBrPos);
+
+            if (Math.abs(flBrPos - brDrive.getCurrentPosition()) > 100 || Math.abs(flBrPos - flDrive.getCurrentPosition()) > 100) {
+                flDrivePower = Math.signum(flDrivePower);
+                frDrivePower = Math.signum(frDrivePower);
+                blDrivePower = Math.signum(blDrivePower);
+                brDrivePower = Math.signum(brDrivePower);
+            } else {
+                flDrivePower = (flDrivePower) + (Math.signum(flDrivePower) * 0.15);
+                frDrivePower = (frDrivePower) + (Math.signum(frDrivePower) * 0.15);
+                blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.15);
+                brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.15);
+            }
+
+            // Correct angle
+            currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            errorAngle = targetAngle - currentAngle;
+
+            double kp = 1;
+
+            double proportional = errorAngle * kp;
+
+            double turn = proportional / 180;
+
+            double flDrivePowerCorrection = -turn;
+            double frDrivePowerCorrection = turn;
+            double blDrivePowerCorrection = -turn;
+            double brDrivePowerCorrection = turn;
+
+            flDrivePowerCorrection = (flDrivePowerCorrection / 2) + (Math.signum(flDrivePowerCorrection) * 0.1);
+            frDrivePowerCorrection = (frDrivePowerCorrection / 2) + (Math.signum(frDrivePowerCorrection) * 0.1);
+            blDrivePowerCorrection = (blDrivePowerCorrection / 2) + (Math.signum(blDrivePowerCorrection) * 0.1);
+            brDrivePowerCorrection = (brDrivePowerCorrection / 2) + (Math.signum(brDrivePowerCorrection) * 0.1);
+
+            flDrivePower += flDrivePowerCorrection;
+            frDrivePower += frDrivePowerCorrection;
+            blDrivePower += blDrivePowerCorrection;
+            brDrivePower += brDrivePowerCorrection;
+
+            // Slowdown
+            flDrivePower = flDrivePower * driveSlowdown;
+            frDrivePower = frDrivePower * driveSlowdown;
+            blDrivePower = blDrivePower * driveSlowdown;
+            brDrivePower = brDrivePower * driveSlowdown;
+
+            updateMotorPowers();
+
+            sleep(DELAY);
+        }
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    public void setX(int pos) {
         double targetAngle = 0;
 
         double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
@@ -1030,6 +1114,10 @@ public class DECODERobot {
         return targetAngle;
     }
 
+    public void setOffsets(int initialX, int initialY, int initialDir){
+        odo.resetPosAndIMU();
+        odo.setPosition(new Pose2D(DistanceUnit.MM, initialX, initialY, DEGREES, initialDir));
+    }
     public enum DriveMode {
         NORMAL,
         GYRO

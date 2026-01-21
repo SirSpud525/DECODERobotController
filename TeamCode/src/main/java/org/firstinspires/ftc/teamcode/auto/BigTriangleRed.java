@@ -16,8 +16,16 @@ public class BigTriangleRed extends LinearOpMode {
         robot.init(hardwareMap);
 
         waitForStart();
+        robot.setOffsets(3080, 3560, 180);
 
-        shootAgain();
+        robot.updateMotorPowers(250);
+        robot.driveTo(2300, 2);
+
+        shoot();
+
+        robot.strafeTo(-1300);
+
+//        shootAgain();
 
         stop();
     }
@@ -32,33 +40,17 @@ public class BigTriangleRed extends LinearOpMode {
         robot.turnTo(-135);
         robot.intakeControl(0);
         robot.updateMotorPowers();
-//        shootPower();
+//        shoot();
 
     }
 
-    public void shootPower(){
+    public void shoot(){
 
         robot.shootControl(0.38);
-        robot.updateMotorPowers(5500);
+        robot.updateMotorPowers(4000);
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
         robot.updateMotorPowers(600);
-
-        robot.intakeControl(0.0);
-        robot.spinnerControl(0.0);
-        robot.updateMotorPowers(2500);
-
-        robot.intakeControl(1.0);
-        robot.spinnerControl(1.0);
-        robot.updateMotorPowers(1000);
-
-// move
-        double power = -1.0;
-        for (int i = 0; i < 10; i++) {
-            robot.spinnerControl(power);
-            robot.updateMotorPowers(100);
-            power *= -1;
-        }
 
         robot.intakeControl(0.0);
         robot.spinnerControl(0.0);
@@ -66,7 +58,23 @@ public class BigTriangleRed extends LinearOpMode {
 
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
-        robot.updateMotorPowers(2500);
+        robot.updateMotorPowers(1200);
+
+// move
+//        double power = -1.0;
+//        for (int i = 0; i < 10; i++) {
+//            robot.spinnerControl(power);
+//            robot.updateMotorPowers(100);
+//            power *= -1;
+//        }
+
+        robot.intakeControl(0.0);
+        robot.spinnerControl(0.0);
+        robot.updateMotorPowers(1500);
+
+        robot.intakeControl(1.0);
+        robot.spinnerControl(1.0);
+        robot.updateMotorPowers(1500);
 
         robot.intakeControl(0.0);
         robot.intakeControl(0.0);
