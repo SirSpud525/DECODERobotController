@@ -143,7 +143,7 @@ public class DECODERobot {
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         odo.resetPosAndIMU();
-        odo.setPosition(new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 0));
+        odo.setPosition(new Pose2D(DistanceUnit.MM, -154, 104, RADIANS, 0));
         //135 * 3.141592653589793238462643383 / 180
     }
 
@@ -315,13 +315,9 @@ public class DECODERobot {
     }
 
     public void alignToTag() {
-        double currentPosition = imu.getRobotYawPitchRollAngles().getYaw(DEGREES) - 4;
+        double desiredAngle = Math.atan((odo.getPosX(DistanceUnit.CM)-20)/(346-odo.getPosY(DistanceUnit.CM)));
 
-        if (camera.currentlyInSight) {
-            targetAngle = currentPosition - camera.roll;
-        }
-
-        double error = targetAngle - currentPosition;
+        double error = targetAngle - odo.getHeading(RADIANS);
 
         double kp = 1;
 
@@ -394,14 +390,18 @@ public class DECODERobot {
             shootingMode = ShootingMode.LOW;
         } else if (gp.dpad_up) {
             shootingMode = ShootingMode.HIGH;
+        } else if (gp.dpad_left || gp.dpad_right){
+            shootingMode = ShootingMode.MID;
         }
 
         if (gp.right_trigger > 0.2) {
             if (shootingMode == ShootingMode.LOW) {
-                shootControl(0.6);
+                shootControl(0.37);
 //                shootControl(distToPower(46));
+            } else if (shootingMode == ShootingMode.HIGH){
+                shootControl(0.45);
             } else {
-                shootControl(0.75);
+                shootControl(0.39);
             }
         } else if (gp.left_trigger > 0.2) {
             shootControl(-0.8);
@@ -683,7 +683,7 @@ public class DECODERobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
-    public void setCoords(int xPos, int yPos){
+    public void setCoords(double xPos, double yPos){
         brake();
 
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -691,11 +691,11 @@ public class DECODERobot {
 
         brake();
 
-        int xmm = xPos * 10;
-        int ymm = yPos * 10;
+        double xmm = xPos * 10;
+        double ymm = yPos * 10;
         final int delay = 10;
-        double error = 25.0;
-        double errorButMore = 250.0 + error;
+        double error = 15.0;
+        double errorButMore = 225.0 + error;
         odo.update();
 
         while (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error ){
@@ -706,17 +706,17 @@ public class DECODERobot {
             double drivePwr = yDist / (double) Math.abs(ymm);
             double strafePwr = xDist / (double) Math.abs(xmm);
 
-            if (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error) {
+            if (Math.abs(yDist) > error) {
                     drivePwr = drivePwr + ((Math.signum(drivePwr) * 0.2));
             } else {
                 drivePwr = 0.0;
-                strafePwr = (strafePwr * 2) + 0.2;
+//                strafePwr = (strafePwr * 2) + 0.2;
             }
-            if (Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error) {
+            if (Math.abs(xDist) > error) {
                     strafePwr = strafePwr + ((Math.signum(strafePwr) * 0.2));
             } else {
                 strafePwr = 0.0;
-                drivePwr = drivePwr * 2;
+//                drivePwr = drivePwr * 2;
             }
 
             if (Math.abs(xDist) > errorButMore){
@@ -1037,6 +1037,7 @@ public class DECODERobot {
 
     public enum ShootingMode {
         LOW,
+        MID,
         HIGH
     }
 }
