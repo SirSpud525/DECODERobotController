@@ -14,9 +14,9 @@ public class SmallTriangleRed extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         robot.init(hardwareMap);
+        robot.setOffsets(2020, 425, 180);
 
         waitForStart();
-        robot.setOffsets(2020, 425, 180);
         robot.updateMotorPowers(250);
         robot.driveTo(-300, 2);
         robot.turnToFromHere(-16);
@@ -32,14 +32,14 @@ public class SmallTriangleRed extends LinearOpMode {
     public void shoot(){
 
         robot.shootControl(0.45);
-        robot.updateMotorPowers(5750);
+        robot.updateMotorPowers(6000);
         robot.spinnerControl(1.0);
         robot.intakeControl(1.0);
         robot.updateMotorPowers(600);
 
         robot.spinnerControl(0.0);
         robot.intakeControl(0.0);
-        robot.updateMotorPowers(1800);
+        robot.updateMotorPowers(2200);
 
         robot.spinnerControl(1.0);
         robot.intakeControl(1.0);
@@ -55,7 +55,7 @@ public class SmallTriangleRed extends LinearOpMode {
 
         robot.intakeControl(0.0);
         robot.spinnerControl(0.0);
-        robot.updateMotorPowers(1500);
+        robot.updateMotorPowers(2000);
 
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);

@@ -24,7 +24,7 @@ import org.firstinspires.ftc.teamcode.utils.Camera;
 
 public class DECODERobot {
     Telemetry telemetry;
-
+    public side curSide = side.BLUE;
     private final ElapsedTime driveModeDebounce = new ElapsedTime();
     public double flDrivePower;
     public double frDrivePower;
@@ -138,12 +138,7 @@ public class DECODERobot {
         //Initializing odometry
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
 
-        odo.setOffsets(0, 0, DistanceUnit.MM);//was 70, 315
-        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
-
-        odo.resetPosAndIMU();
-        odo.setPosition(new Pose2D(DistanceUnit.MM, -154, 104, RADIANS, 0));
+//        odo.setPosition(new Pose2D(DistanceUnit.MM, -154, 104, RADIANS, 0));
         //135 * 3.141592653589793238462643383 / 180
     }
 
@@ -183,6 +178,7 @@ public class DECODERobot {
 //        telemetry.addData("Drive Slowdown: ", driveSlowdown);
 //        telemetry.addData("Drive Mode: ", driveMode);
         telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(DEGREES));
+        telemetry.addData("odoAngle: ", odo.getHeading(DEGREES));
 //        telemetry.addData("Slide Power: ", slidePower);
 //        telemetry.addData("Camera: ", camera);
 //        telemetry.addData("Intake Power: ", intakePower);
@@ -214,7 +210,7 @@ public class DECODERobot {
             setDrivingMode(gp1);
 
             if (gp1.y) {
-                alignToTag();
+                aimbot();
             } else {
                 if (driveMode == DriveMode.NORMAL) {
                     mainDrive(gp1);
@@ -314,8 +310,14 @@ public class DECODERobot {
         mainDrive(actualDrive, turn, actualStrafe, slowDownFactor, speedUpFactor);
     }
 
-    public void alignToTag() {
-        double targetAngle = -Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 7)/(346-odo.getPosY(DistanceUnit.CM))));
+    public void aimbot() {
+        double targetAngle;
+
+        if (curSide == side.BLUE) {
+            targetAngle = -Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 7) / (346 - odo.getPosY(DistanceUnit.CM))));
+        }else{
+            targetAngle = Math.PI + (359 - Math.atan((odo.getPosX(DistanceUnit.CM)) / (346 - odo.getPosY(DistanceUnit.CM))));
+        }
 
         double error = (targetAngle - odo.getHeading(RADIANS)) * (180 / Math.PI);
 
@@ -1117,6 +1119,11 @@ public class DECODERobot {
     public void setOffsets(int initialX, int initialY, int initialDir){
         odo.resetPosAndIMU();
         odo.setPosition(new Pose2D(DistanceUnit.MM, initialX, initialY, DEGREES, initialDir));
+        odo.setOffsets(0, 0, DistanceUnit.MM);//was 70, 315
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+
+//        odo.resetPosAndIMU();
     }
     public enum DriveMode {
         NORMAL,
@@ -1128,4 +1135,10 @@ public class DECODERobot {
         MID,
         HIGH
     }
+
+    public enum side {
+        BLUE,
+        RED
+    }
+
 }

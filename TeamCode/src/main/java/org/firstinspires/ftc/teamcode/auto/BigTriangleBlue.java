@@ -15,7 +15,7 @@ public class BigTriangleBlue extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         robot.init(hardwareMap);
-        robot.setOffsets(580, 3560, 180);
+        robot.setOffsets(580, 3560, -133);
 
         waitForStart();
 
@@ -32,14 +32,14 @@ public class BigTriangleBlue extends LinearOpMode {
 
     public void shoot(){
         robot.shootControl(0.38);
-        robot.updateMotorPowers(4000);
+        robot.updateMotorPowers(5500);
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
         robot.updateMotorPowers(600);
 
         robot.intakeControl(0.0);
         robot.spinnerControl(0.0);
-        robot.updateMotorPowers(1500);
+        robot.updateMotorPowers(1750);
 
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
@@ -55,7 +55,7 @@ public class BigTriangleBlue extends LinearOpMode {
 
         robot.intakeControl(0.0);
         robot.spinnerControl(0.0);
-        robot.updateMotorPowers(1500);
+        robot.updateMotorPowers(2250);
 
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
