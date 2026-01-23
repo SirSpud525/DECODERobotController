@@ -15,11 +15,12 @@ public class TestAuto extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         robot.init(hardwareMap);
+        robot.setOffsets(0, 0, 0);
 
         waitForStart();
 
 //        robot.turnTo(-45);
-        robot.setCoords(90, 90);
+        robot.setCoords(-90, -90);
 //        robot.turnTo(45);
 
         stop();

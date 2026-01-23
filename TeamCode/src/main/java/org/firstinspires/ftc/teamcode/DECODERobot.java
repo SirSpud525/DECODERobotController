@@ -31,13 +31,13 @@ public class DECODERobot {
     public double brDrivePower;
     public double blDrivePower;
     public double driveSlowdown = 2;
+    public Pose2D desiredPose = new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 0);
     public DriveMode driveMode = DriveMode.NORMAL;
     private DcMotor flDrive;
     private DcMotor frDrive;
     private DcMotor blDrive;
     private DcMotor brDrive;
 
-    public double targetAngle = 0.0;
 
 //    public double slidePower;
 //    private DcMotor leftSlide;
@@ -189,7 +189,6 @@ public class DECODERobot {
         telemetry.addData("Position: ", odo.getPosition());
 //        telemetry.addData("Power for shoots: ", distToPower(45));
 //        telemetry.addData("Actual power: ", leftShoot.getPower());
-        telemetry.addData("Target angle: ", getTargetAngle(305,305));
 
         telemetry.update();
     }
@@ -208,9 +207,13 @@ public class DECODERobot {
             shootControl(0.0);
         } else {
             setDrivingMode(gp1);
-
+            if (gp1.dpad_down){
+                desiredPose = odo.getPosition();
+            }
             if (gp1.y) {
                 aimbot();
+            } else if (gp1.b){
+                staybot();
             } else {
                 if (driveMode == DriveMode.NORMAL) {
                     mainDrive(gp1);
@@ -218,9 +221,10 @@ public class DECODERobot {
                     mainGyroDrive(gp1);
                 }
             }
-
+            if (gp1.left_bumper && gp1.right_bumper){
+                resetOdo();
+            }
             spinnerControl(0.0);
-//            slideControl(gp2);
             intakeControl(gp2);
             shootControl(gp2);
             spinnerControl(gp2);
@@ -314,9 +318,9 @@ public class DECODERobot {
         double targetAngle;
 
         if (curSide == side.BLUE) {
-            targetAngle = -Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 7) / (346 - odo.getPosY(DistanceUnit.CM))));
+            targetAngle = -Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 7) / (343 - odo.getPosY(DistanceUnit.CM))));
         }else{
-            targetAngle = Math.PI + (359 - Math.atan((odo.getPosX(DistanceUnit.CM)) / (346 - odo.getPosY(DistanceUnit.CM))));
+            targetAngle = Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 333) / (346 - odo.getPosY(DistanceUnit.CM))));
         }
 
         double error = (targetAngle - odo.getHeading(RADIANS)) * (180 / Math.PI);
@@ -337,13 +341,76 @@ public class DECODERobot {
             blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.1);
             brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.1);
 
-            flDrivePower = flDrivePower * driveSlowdown;
-            frDrivePower = frDrivePower * driveSlowdown;
-            blDrivePower = blDrivePower * driveSlowdown;
-            brDrivePower = brDrivePower * driveSlowdown;
+//            flDrivePower = flDrivePower / driveSlowdown;
+//            frDrivePower = frDrivePower / driveSlowdown;
+//            blDrivePower = blDrivePower / driveSlowdown;
+//            brDrivePower = brDrivePower / driveSlowdown;
         } else {
             brake();
         }
+    }
+
+    public void staybot(){
+
+        double xmm = desiredPose.getX(DistanceUnit.MM);
+        double ymm = desiredPose.getY(DistanceUnit.MM);
+        double error = 15.0;
+        double errorButMore = 225.0 + error;
+        odo.update();
+
+        if (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error ) {
+            // Drive
+            double xDist = xmm - odo.getPosX(DistanceUnit.MM);
+            double yDist = xmm - odo.getPosY(DistanceUnit.MM);
+
+            double drivePwr = yDist / (double) Math.abs(ymm);
+            double strafePwr = xDist / (double) Math.abs(xmm);
+
+            if (Math.abs(yDist) > error) {
+                drivePwr = drivePwr + ((Math.signum(drivePwr) * 0.2));
+            } else {
+                drivePwr = 0.0;
+            }
+            if (Math.abs(xDist) > error) {
+                strafePwr = strafePwr + ((Math.signum(strafePwr) * 0.2));
+            } else {
+                strafePwr = 0.0;
+            }
+
+            if (Math.abs(xDist) > errorButMore) {
+                drivePwr = 1.2 * Math.signum(yDist);
+            }
+            if (Math.abs(yDist) > errorButMore) {
+                strafePwr = 1.2 * Math.signum(xDist);
+            }
+
+            double angle = odo.getHeading(RADIANS);
+
+            double cosine = Math.cos(-angle);
+            double sine = Math.sin(-angle);
+
+            double driveCos = cosine * drivePwr;
+            double driveSin = sine * drivePwr;
+            double strafeCos = cosine * strafePwr;
+            double strafeSin = sine * strafePwr;
+
+            drivePwr = (driveCos + strafeSin) / 1.25;
+            strafePwr = (strafeCos - driveSin);
+
+            flDrivePower = (drivePwr + strafePwr) / 1.5;
+            frDrivePower = (drivePwr - strafePwr) / 1.5;
+            blDrivePower = (drivePwr - strafePwr) / 1.5;
+            brDrivePower = (drivePwr + strafePwr) / 1.5;
+
+            // Slowdown
+//            flDrivePower = flDrivePower / driveSlowdown;
+//            frDrivePower = frDrivePower / driveSlowdown;
+//            blDrivePower = blDrivePower / driveSlowdown;
+//            brDrivePower = brDrivePower / driveSlowdown;
+        } else {
+            brake();
+        }
+
     }
 
 //    public void slideControl(Gamepad gp) {
@@ -403,9 +470,9 @@ public class DECODERobot {
                 shootControl(0.37);
 //                shootControl(distToPower(46));
             } else if (shootingMode == ShootingMode.HIGH){
-                shootControl(0.45);
+                shootControl(0.47);
             } else {
-                shootControl(0.39);
+                shootControl(0.4);
             }
         } else if (gp.left_trigger > 0.2) {
             shootControl(-0.8);
@@ -1108,23 +1175,31 @@ public class DECODERobot {
         return 60 * distToVelocity(theta) / (3.1415926535 * 0.05 * maxRPM);
     }
 
-    public double getTargetAngle(int initialX, int initialY){
-        //returns the angle needed to turn the robot
-        double x = odo.getPosX(DistanceUnit.MM);
-        double y = odo.getPosY(DistanceUnit.MM);
-        targetAngle = 180 * Math.atan((initialY + y)/(initialX + x)) / 3.1415926 - imu.getRobotYawPitchRollAngles().getYaw();
-        return targetAngle;
-    }
-
     public void setOffsets(int initialX, int initialY, int initialDir){
-        odo.resetPosAndIMU();
-        odo.setPosition(new Pose2D(DistanceUnit.MM, initialX, initialY, DEGREES, initialDir));
         odo.setOffsets(0, 0, DistanceUnit.MM);//was 70, 315
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        odo.resetPosAndIMU();
+        sleep(300);
+        odo.setPosition(new Pose2D(DistanceUnit.MM, initialX, initialY, DEGREES, initialDir));
 
 //        odo.resetPosAndIMU();
     }
+    public void resetOdo(){
+        odo.setOffsets(0, 0, DistanceUnit.MM);
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        this.imu.resetYaw();
+        odo.resetPosAndIMU();
+        sleep(300);
+        if (curSide == side.RED){
+            odo.setPosition(new Pose2D(DistanceUnit.MM, 1280, 0, DEGREES, 0));
+
+        } else {
+            odo.setPosition(new Pose2D(DistanceUnit.MM, 1955, 0, DEGREES, 0));
+        }
+    }
+
     public enum DriveMode {
         NORMAL,
         GYRO
