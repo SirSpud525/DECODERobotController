@@ -40,9 +40,10 @@ public class MashedPotatoRobot {
     public double lowLeftPower;
     public double lowRightPower;
     public boolean gyroDrive = true;
-    public boolean pushing = false;
     public boolean locked = false;
-    public shooterStates shooterState = shooterStates.UP;
+    public shooterStates shooterState = shooterStates.HIGH;
+    public side curSide = side.BLUE;
+    public Pose2D desiredPose = new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 0);
     public double targetAngle = 0.0;
 
     public double manualPower = 0.5;
@@ -249,6 +250,8 @@ public class MashedPotatoRobot {
     //TELEOP FUNCTIONS
 
     public void gamePadPower(Gamepad gp1, Gamepad gp2, Telemetry telemetry) {
+        odo.update();
+//        camera.update();
         setLock(gp2);
 //checks to see if lock should be used, stops everything from moving if it is
 //otherwise run functions as normal
@@ -258,13 +261,21 @@ public class MashedPotatoRobot {
             shootMotor.setPower(0.0);
             shootMotor2.setPower(0.0);
         }else {
-            if (gyroDrive) {
-                gyroDrive(gp1, telemetry);
+            if (gp1.y) {
+                aimbot();
+            } else if (gp1.b){
+                staybot();
             } else {
-                Driving(gp1, telemetry);
+                if (gyroDrive) {
+                    gyroDrive(gp1, telemetry);
+                } else {
+                    Driving(gp1, telemetry);
+                }
             }
             toggleGyro(gp1);
             handleShootMotors(gp2);
+            intake(gp2);
+            transferSystem(gp2);
         }
         updateTelemetry(telemetry);
     }
@@ -288,25 +299,18 @@ public class MashedPotatoRobot {
             gyroDrive = !gyroDrive;
         }
     }
-    public void lowerIntake(Gamepad gp2) {
+    public void intake(Gamepad gp2) {
         //sets intake power when b is pressed
         if (gp2.b == true) {
             intake.setPower(1.0);
         }
-        else {
+        else if (gp2.left_trigger > 0.1){
+            intake.setPower(-1.0);
+        } else {
             intake.setPower(0);
         }
     }
-    //autumn
-    //use 4 servos to move the artifacts
-    //upperRight
-    //upperLeft
-    //lowerRight
-    //lowerLeft
-    //all servos should move the artifact up when left stick is up and and down when left stick
-    //is down. For now assume that 1.0 turns to the right, -1.0 to the left
-    //USE THE PAPER WE WROTE THE OTHER WEEK
-    public void intakeServos(Gamepad gp2) {
+    public void transferSystem(Gamepad gp2) {
         double currentInput = gp2.left_stick_y;
         if (currentInput > 0){
             upperRight.setPower(1.0);
@@ -319,8 +323,12 @@ public class MashedPotatoRobot {
             upperLeft.setPower(1.0);
             lowerRight.setPower(-1.0);
             lowerLeft.setPower(1.0);
-        }
-        else{
+        } else if (gp2.left_trigger > 0.1){
+            upperRight.setPower(-1.0);
+            upperLeft.setPower(1.0);
+            lowerRight.setPower(-1.0);
+            lowerLeft.setPower(1.0);
+        } else{
             upperRight.setPower(0);
             upperLeft.setPower(0);
             lowerRight.setPower(0);
@@ -331,30 +339,37 @@ public class MashedPotatoRobot {
 
     public void handleShootMotors(Gamepad gp2) {
         if (gp2.dpad_up) {
-            shooterState = shooterState.UP; //enum name mentioned here - Saumya
+            shooterState = shooterStates.HIGH; //enum name mentioned here - Saumya
         }
         if (gp2.dpad_down) {
-            shooterState = shooterState.DOWN;//enum name mentioned here - Saumya
+            shooterState = shooterStates.LOW;//enum name mentioned here - Saumya
         }
 
-        if (gp2.dpad_right) {
-            shooterState = shooterState.MANUAL;//enum name mentioned here - Saumya
+        if (gp2.dpad_right || gp2.dpad_left) {
+            shooterState = shooterStates.MID;//enum name mentioned here - Saumya
         }
 
         if(gp2.right_trigger > 0.1) {
-            if (shooterState == shooterState.UP) {
-                shootMotor.setPower(0.8); // setting power fo the shoot motor based on what enum is used - Saumya
-                shootMotor2.setPower(0.8);
+            if (shooterState == shooterStates.HIGH) {
+                shootMotor.setPower(0.47); // setting power fo the shoot motor based on what enum is used - Saumya
+                shootMotor2.setPower(0.47);
             }
-            if (shooterState == shooterState.DOWN) {
-                shootMotor.setPower(0.6);
-                shootMotor2.setPower(0.6);
+            if (shooterState == shooterStates.MID){
+                shootMotor.setPower(0.4);
+                shootMotor2.setPower(0.4);
             }
-            if (shooterState == shooterState.MANUAL) {
+            if (shooterState == shooterStates.LOW) {
+                shootMotor.setPower(0.37);
+                shootMotor2.setPower(0.37);
+            }
+            if (shooterState == shooterStates.MANUAL) {
                 shootMotor.setPower(manualPower);
                 shootMotor2.setPower(manualPower);
             }
 
+        } else if(gp2.left_trigger > 0.1){
+            shootMotor.setPower(-0.8);
+            shootMotor2.setPower(-0.8);
         }
         else {
             shootMotor.setPower(0); //setting power to 0 simple - Saumya
@@ -464,7 +479,95 @@ public class MashedPotatoRobot {
 
     }
 
-    //AUTO FUNCTIONS
+    public void aimbot() {
+        double targetAngle;
+
+        if (curSide == side.BLUE) {
+            targetAngle = -Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 7) / (343 - odo.getPosY(DistanceUnit.CM))));
+        }else{
+            targetAngle = Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 333) / (346 - odo.getPosY(DistanceUnit.CM))));
+        }
+
+        double error = (targetAngle - odo.getHeading(RADIANS)) * (180 / Math.PI);
+
+        double kp = 1;
+
+        double proportional = error * kp;
+        double turn = proportional / (180);
+
+        if (Math.abs(error) > 0.25) {
+            flDrivePower = -turn;
+            frDrivePower = turn;
+            blDrivePower = -turn;
+            brDrivePower = turn;
+
+            frontLeft.setPower((flDrivePower) + (Math.signum(flDrivePower) * 0.1));
+            frontRight.setPower((frDrivePower) + (Math.signum(frDrivePower) * 0.1));
+            backLeft.setPower((blDrivePower) + (Math.signum(blDrivePower) * 0.1));
+            backRight.setPower((brDrivePower) + (Math.signum(brDrivePower) * 0.1));
+
+        } else {
+            brake();
+        }
+    }
+
+    public void staybot() {
+
+        double xmm = desiredPose.getX(DistanceUnit.MM);
+        double ymm = desiredPose.getY(DistanceUnit.MM);
+        double error = 15.0;
+        double errorButMore = 225.0 + error;
+
+        if (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error) {
+            // Drive
+            double xDist = xmm - odo.getPosX(DistanceUnit.MM);
+            double yDist = xmm - odo.getPosY(DistanceUnit.MM);
+
+            double drivePwr = yDist / (double) Math.abs(ymm);
+            double strafePwr = xDist / (double) Math.abs(xmm);
+
+            if (Math.abs(yDist) > error) {
+                drivePwr = drivePwr + ((Math.signum(drivePwr) * 0.2));
+            } else {
+                drivePwr = 0.0;
+            }
+            if (Math.abs(xDist) > error) {
+                strafePwr = strafePwr + ((Math.signum(strafePwr) * 0.2));
+            } else {
+                strafePwr = 0.0;
+            }
+
+            if (Math.abs(xDist) > errorButMore) {
+                drivePwr = 1.2 * Math.signum(yDist);
+            }
+            if (Math.abs(yDist) > errorButMore) {
+                strafePwr = 1.2 * Math.signum(xDist);
+            }
+
+            double angle = odo.getHeading(RADIANS);
+
+            double cosine = Math.cos(-angle);
+            double sine = Math.sin(-angle);
+
+            double driveCos = cosine * drivePwr;
+            double driveSin = sine * drivePwr;
+            double strafeCos = cosine * strafePwr;
+            double strafeSin = sine * strafePwr;
+
+            drivePwr = (driveCos + strafeSin) / 1.25;
+            strafePwr = (strafeCos - driveSin);
+
+            frontLeft.setPower((drivePwr + strafePwr) / 1.5);
+            frontRight.setPower((drivePwr - strafePwr) / 1.5);
+            backLeft.setPower((drivePwr - strafePwr) / 1.5);
+            backRight.setPower((drivePwr + strafePwr) / 1.5);
+
+        } else {
+            brake();
+        }
+    }
+
+        //AUTO FUNCTIONS
     public void strafeTo(int pos) {
         double targetAngle = 0;
 
@@ -582,6 +685,97 @@ public class MashedPotatoRobot {
             handleMotorPower();
         }
         drive(0.0);
+
+    }
+    public void setCoords(double xPos, double yPos){
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        brake();
+
+        double xmm = xPos * 10;
+        double ymm = yPos * 10;
+        final int delay = 10;
+        double error = 15.0;
+        double errorButMore = 225.0 + error;
+        odo.update();
+
+        while (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error ){
+            // Drive
+            double xDist = xmm - odo.getPosX(DistanceUnit.MM);
+            double yDist = xmm - odo.getPosY(DistanceUnit.MM);
+
+            double drivePwr = yDist / (double) Math.abs(ymm);
+            double strafePwr = xDist / (double) Math.abs(xmm);
+
+            if (Math.abs(yDist) > error) {
+                drivePwr = drivePwr + ((Math.signum(drivePwr) * 0.2));
+            } else {
+                drivePwr = 0.0;
+//                strafePwr = (strafePwr * 2) + 0.2;
+            }
+            if (Math.abs(xDist) > error) {
+                strafePwr = strafePwr + ((Math.signum(strafePwr) * 0.2));
+            } else {
+                strafePwr = 0.0;
+//                drivePwr = drivePwr * 2;
+            }
+
+            if (Math.abs(xDist) > errorButMore){
+                drivePwr = 1.2 * Math.signum(yDist);
+            }
+            if (Math.abs(yDist) > errorButMore){
+                strafePwr = 1.2 * Math.signum(xDist);
+            }
+
+            double angle = odo.getHeading(RADIANS);
+
+            double cosine = Math.cos(-angle);
+            double sine = Math.sin(-angle);
+
+            double driveCos = cosine * drivePwr;
+            double driveSin = sine * drivePwr;
+            double strafeCos = cosine * strafePwr;
+            double strafeSin = sine * strafePwr;
+
+            drivePwr = (driveCos + strafeSin) / 1.25;
+            strafePwr = (strafeCos - driveSin);
+
+            flDrivePower = (drivePwr + strafePwr) / 1.5;
+            frDrivePower = (drivePwr - strafePwr) / 1.5;
+            blDrivePower = (drivePwr - strafePwr) / 1.5;
+            brDrivePower = (drivePwr + strafePwr) / 1.5;
+
+            // Slowdown
+//            flDrivePower = flDrivePower / driveSlowdown;
+//            frDrivePower = frDrivePower / driveSlowdown;
+//            blDrivePower = blDrivePower / driveSlowdown;
+//            brDrivePower = brDrivePower / driveSlowdown;
+
+            handleMotorPower();
+            odo.update();
+
+            telemetry.addData("angleOffset", angle * 180/3.14);
+            telemetry.addData("heading", odo.getHeading(DEGREES));
+            telemetry.addData("flDrive", flDrivePower);
+            telemetry.addData("blDrive", blDrivePower);
+            telemetry.addData("frDrive", frDrivePower);
+            telemetry.addData("brDrive", brDrivePower);
+            telemetry.addData("drivePwr", drivePwr);
+            telemetry.addData("strafePwr", strafePwr);
+            telemetry.addData("xPos", odo.getPosX(DistanceUnit.MM));
+            telemetry.addData("yPos", odo.getPosY(DistanceUnit.MM));
+            telemetry.update();
+
+            sleep(delay);
+        }
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
 
@@ -833,7 +1027,7 @@ public class MashedPotatoRobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
-public void intakePow(double power){
+public void intakePower(double power){
         intakePower = power;
 }
 
@@ -868,9 +1062,12 @@ public void donut() {
     //ENUMS
 
     public enum shooterStates{ //enum is a list of states, usually created in all caps -Saumya
-        UP, DOWN, MANUAL
+        HIGH, MID, LOW, MANUAL
+    }
 
-
+    public enum side {
+        BLUE,
+        RED
     }
 
 }
