@@ -320,7 +320,7 @@ public class DECODERobot {
         if (curSide == side.BLUE) {
             targetAngle = -Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 7) / (343 - odo.getPosY(DistanceUnit.CM))));
         }else{
-            targetAngle = Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 333) / (346 - odo.getPosY(DistanceUnit.CM))));
+            targetAngle = Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 313) / (346 - odo.getPosY(DistanceUnit.CM))));
         }
 
         double error = (targetAngle - odo.getHeading(RADIANS)) * (180 / Math.PI);
@@ -470,9 +470,9 @@ public class DECODERobot {
                 shootControl(0.37);
 //                shootControl(distToPower(46));
             } else if (shootingMode == ShootingMode.HIGH){
-                shootControl(0.47);
+                shootControl(0.45);
             } else {
-                shootControl(0.4);
+                shootControl(0.42);
             }
         } else if (gp.left_trigger > 0.2) {
             shootControl(-0.8);

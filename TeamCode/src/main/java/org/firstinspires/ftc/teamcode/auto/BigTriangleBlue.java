@@ -21,7 +21,7 @@ public class BigTriangleBlue extends LinearOpMode {
 
 //        robot.slideControl(0.2);
         robot.updateMotorPowers(250);
-        robot.driveTo(2300, 2);
+        robot.driveTo(2050, 2);
 
         shoot();
 
@@ -31,8 +31,8 @@ public class BigTriangleBlue extends LinearOpMode {
     }
 
     public void shoot(){
-        robot.shootControl(0.38);
-        robot.updateMotorPowers(5500);
+        robot.shootControl(0.4225);
+        robot.updateMotorPowers(6500);
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
         robot.updateMotorPowers(600);
@@ -43,7 +43,7 @@ public class BigTriangleBlue extends LinearOpMode {
 
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
-        robot.updateMotorPowers(1200);
+        robot.updateMotorPowers(1800);
 
 // move
 //        double power = -1.0;
@@ -55,16 +55,16 @@ public class BigTriangleBlue extends LinearOpMode {
 
         robot.intakeControl(0.0);
         robot.spinnerControl(0.0);
-        robot.updateMotorPowers(2250);
+        robot.updateMotorPowers(2700);
 
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
-        robot.updateMotorPowers(1500);
+        robot.updateMotorPowers(4000);
 
         robot.intakeControl(0.0);
         robot.intakeControl(0.0);
         robot.shootControl(0.0);
         robot.updateMotorPowers();
     }
-
+//potato
 }

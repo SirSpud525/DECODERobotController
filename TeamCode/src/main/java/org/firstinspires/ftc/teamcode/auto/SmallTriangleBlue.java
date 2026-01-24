@@ -19,7 +19,7 @@ public class SmallTriangleBlue extends LinearOpMode {
         waitForStart();
         robot.updateMotorPowers(250);
         robot.driveTo(-310, 2);
-        robot.turnToFromHere(28);
+        robot.turnToFromHere(25);
 
         shoot();
 
@@ -32,18 +32,18 @@ public class SmallTriangleBlue extends LinearOpMode {
     public void shoot(){
 
         robot.shootControl(0.45);
-        robot.updateMotorPowers(6000);
+        robot.updateMotorPowers(7000);
         robot.spinnerControl(1.0);
         robot.intakeControl(1.0);
         robot.updateMotorPowers(600);
 
         robot.spinnerControl(0.0);
         robot.intakeControl(0.0);
-        robot.updateMotorPowers(2200);
+        robot.updateMotorPowers(2800);
 
         robot.spinnerControl(1.0);
         robot.intakeControl(1.0);
-        robot.updateMotorPowers(1200);
+        robot.updateMotorPowers(1800);
 
         // move
 //        double power = -1.0;
@@ -59,7 +59,7 @@ public class SmallTriangleBlue extends LinearOpMode {
 
         robot.intakeControl(1.0);
         robot.spinnerControl(1.0);
-        robot.updateMotorPowers(3000);
+        robot.updateMotorPowers(6000);
 
         robot.intakeControl(0.0);
         robot.intakeControl(0.0);
