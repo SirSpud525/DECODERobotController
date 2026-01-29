@@ -836,7 +836,7 @@ public class DECODERobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
-    public void setCoords(double xPos, double yPos){
+    public void setCoords(double xPos, double yPos, double desAngle){
         brake();
 
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -848,10 +848,12 @@ public class DECODERobot {
         double ymm = yPos * 10;
         final int delay = 10;
         double error = 15.0;
+        double angError = 0.5;
         double errorButMore = 225.0 + error;
+        double kp = 1;
         odo.update();
 
-        while (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error ){
+        while (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error || Math.abs(desAngle - odo.getHeading(DEGREES)) > angError){
             // Drive
             double xDist = xmm - odo.getPosX(DistanceUnit.MM);
             double yDist = xmm - odo.getPosY(DistanceUnit.MM);
@@ -863,13 +865,11 @@ public class DECODERobot {
                     drivePwr = drivePwr + ((Math.signum(drivePwr) * 0.2));
             } else {
                 drivePwr = 0.0;
-//                strafePwr = (strafePwr * 2) + 0.2;
             }
             if (Math.abs(xDist) > error) {
                     strafePwr = strafePwr + ((Math.signum(strafePwr) * 0.2));
             } else {
                 strafePwr = 0.0;
-//                drivePwr = drivePwr * 2;
             }
 
             if (Math.abs(xDist) > errorButMore){
@@ -897,11 +897,19 @@ public class DECODERobot {
             blDrivePower = (drivePwr - strafePwr) / 1.5;
             brDrivePower = (drivePwr + strafePwr) / 1.5;
 
-            // Slowdown
-//            flDrivePower = flDrivePower / driveSlowdown;
-//            frDrivePower = frDrivePower / driveSlowdown;
-//            blDrivePower = blDrivePower / driveSlowdown;
-//            brDrivePower = brDrivePower / driveSlowdown;
+            double curAngError = desAngle - odo.getHeading(DEGREES);
+
+            if (Math.abs(curAngError) > angError) {
+                double proportional = curAngError * kp;
+                double turn = proportional / 180;
+                turn = turn + (Math.signum(curAngError) * 0.1);
+
+                flDrivePower -= turn;
+                frDrivePower += turn;
+                blDrivePower -= turn;
+                brDrivePower += turn;
+
+            }
 
             updateMotorPowers();
             odo.update();
