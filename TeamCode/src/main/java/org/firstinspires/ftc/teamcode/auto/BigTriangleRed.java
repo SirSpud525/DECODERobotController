@@ -14,14 +14,14 @@ public class BigTriangleRed extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         robot.init(hardwareMap);
-        robot.setOffsets(3080, 3560, 128);
+        robot.setOffsets(2870, 3070, 0);
 
         waitForStart();
 
         robot.updateMotorPowers(250);
-        robot.driveTo(2050, 2);
-
-        shoot();
+        robot.setCoords(241, 245, 128);
+        sleep(5000);
+//        shoot();
 
         robot.strafeTo(-1300);
 

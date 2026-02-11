@@ -1184,9 +1184,9 @@ public class DECODERobot {
     }
 
     public void setOffsets(int initialX, int initialY, int initialDir){
-        odo.setOffsets(0, 0, DistanceUnit.MM);//was 70, 315
+        odo.setOffsets(-250, -175, DistanceUnit.MM);//was 70, 315 (smth is very wrong here - maybe the offsets are reversed?)
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
         odo.resetPosAndIMU();
         sleep(300);
         odo.setPosition(new Pose2D(DistanceUnit.MM, initialX, initialY, DEGREES, initialDir));
@@ -1194,9 +1194,9 @@ public class DECODERobot {
 //        odo.resetPosAndIMU();
     }
     public void resetOdo(){
-        odo.setOffsets(0, 0, DistanceUnit.MM);
+        odo.setOffsets(-250, -175, DistanceUnit.MM);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
         this.imu.resetYaw();
         odo.resetPosAndIMU();
         sleep(300);
