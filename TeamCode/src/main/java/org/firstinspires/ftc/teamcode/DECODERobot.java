@@ -92,7 +92,7 @@ public class DECODERobot {
         // Reverse motors
         frDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         brDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-
+        intake.setDirection(DcMotorSimple.Direction.REVERSE);
         trSpinner.setDirection(DcMotorSimple.Direction.REVERSE);
         brSpinner.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -467,12 +467,12 @@ public class DECODERobot {
 
         if (gp.right_trigger > 0.2) {
             if (shootingMode == ShootingMode.LOW) {
-                shootControl(0.37);
+                shootControl(0.29);//was 0.37
 //                shootControl(distToPower(46));
             } else if (shootingMode == ShootingMode.HIGH){
-                shootControl(0.45);
+                shootControl(0.35);//was 0.45
             } else {
-                shootControl(0.42);
+                shootControl(0.32);//was 0.42
             }
         } else if (gp.left_trigger > 0.2) {
             shootControl(-0.8);
@@ -1184,7 +1184,7 @@ public class DECODERobot {
     }
 
     public void setOffsets(int initialX, int initialY, int initialDir){
-        odo.setOffsets(-250, -175, DistanceUnit.MM);//was 70, 315 (smth is very wrong here - maybe the offsets are reversed?)
+        odo.setOffsets(0, 0, DistanceUnit.MM);//was 70, 315 (smth is very wrong here - maybe the offsets are reversed? - -250, -175)
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
         odo.resetPosAndIMU();
@@ -1194,7 +1194,7 @@ public class DECODERobot {
 //        odo.resetPosAndIMU();
     }
     public void resetOdo(){
-        odo.setOffsets(-250, -175, DistanceUnit.MM);
+        odo.setOffsets(0, 0, DistanceUnit.MM);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
         this.imu.resetYaw();
