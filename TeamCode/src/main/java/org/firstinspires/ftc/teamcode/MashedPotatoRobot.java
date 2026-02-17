@@ -85,7 +85,9 @@ public class MashedPotatoRobot {
         // Set reverse motors
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        shootMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        intake.setDirection(DcMotorSimple.Direction.REVERSE);
+//        upperRight.setDirection(DcMotorSimple.Direction.REVERSE);
+//        lowerRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         //encoders
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -177,7 +179,7 @@ public class MashedPotatoRobot {
         telemetry.addData("Position: ", odo.getPosition());
 //        telemetry.addData("Power for shoots: ", distToPower(45));
 //        telemetry.addData("Actual power: ", leftShoot.getPower());
-        telemetry.addData("Target angle: ", getTargetAngle(305,305));
+//        telemetry.addData("Target angle: ", getTargetAngle(305,305));
 
         telemetry.update();
     }
@@ -245,6 +247,31 @@ public class MashedPotatoRobot {
         backLeft.setPower(pow);
         frontRight.setPower(pow);
         backRight.setPower(pow);
+    }
+
+    public void setOffsets(int initialX, int initialY, int initialDir){
+        odo.setOffsets(0, 0, DistanceUnit.MM);//was 70, 315 (smth is very wrong here - maybe the offsets are reversed? - -250, -175)
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        odo.resetPosAndIMU();
+        sleep(300);
+        odo.setPosition(new Pose2D(DistanceUnit.MM, initialX, initialY, DEGREES, initialDir));
+
+//        odo.resetPosAndIMU();
+    }
+    public void resetOdo(){
+        odo.setOffsets(0, 0, DistanceUnit.MM);
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        this.imu.resetYaw();
+        odo.resetPosAndIMU();
+        sleep(300);
+        if (curSide == side.RED){
+            odo.setPosition(new Pose2D(DistanceUnit.MM, 1280, 0, DEGREES, 0));
+
+        } else {
+            odo.setPosition(new Pose2D(DistanceUnit.MM, 1955, 0, DEGREES, 0));
+        }
     }
 
     //TELEOP FUNCTIONS
