@@ -11,6 +11,7 @@ MashedPotatoRobot robot = new MashedPotatoRobot();
     @Override
     public void init() {
         robot.init(hardwareMap);
+        robot.setOffsets(0,0,0);
     }
 
     @Override

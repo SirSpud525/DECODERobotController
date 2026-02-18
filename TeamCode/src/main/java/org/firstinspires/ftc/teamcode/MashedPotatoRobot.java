@@ -85,7 +85,7 @@ public class MashedPotatoRobot {
         // Set reverse motors
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        intake.setDirection(DcMotorSimple.Direction.REVERSE);
+//        intake.setDirection(DcMotorSimple.Direction.REVERSE);
 //        upperRight.setDirection(DcMotorSimple.Direction.REVERSE);
 //        lowerRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
