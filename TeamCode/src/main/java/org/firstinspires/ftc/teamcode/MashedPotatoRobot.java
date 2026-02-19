@@ -39,7 +39,7 @@ public class MashedPotatoRobot {
     public double upRightPower;
     public double lowLeftPower;
     public double lowRightPower;
-    public boolean gyroDrive = true;
+    public boolean gyroDrive = false;
     public boolean locked = false;
     public shooterStates shooterState = shooterStates.HIGH;
     public side curSide = side.BLUE;
@@ -69,25 +69,28 @@ public class MashedPotatoRobot {
 
     public void init(final HardwareMap hardwareMap) {
         // Initialize hardware map - declares code version of physical motors using the driver/control hub
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); //3
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight"); //2
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft"); //0
-        backRight = hardwareMap.get(DcMotor.class, "backRight"); //1
-        shootMotor = hardwareMap.get(DcMotor.class, "shoot");
-        shootMotor2 = hardwareMap.get(DcMotor.class, "shoot2");
+        frontLeft = hardwareMap.get(DcMotor.class, "flDrive"); //3
+        frontRight = hardwareMap.get(DcMotor.class, "frDrive"); //2
+        backLeft = hardwareMap.get(DcMotor.class, "blDrive"); //0
+        backRight = hardwareMap.get(DcMotor.class, "brDrive"); //1
+        shootMotor = hardwareMap.get(DcMotor.class, "leftShoot");
+        shootMotor2 = hardwareMap.get(DcMotor.class, "rightShoot");
 
         intake = hardwareMap.get(DcMotor.class, "intake");
-        lowerLeft = hardwareMap.get(CRServo.class, "lowerLeft");
-        lowerRight = hardwareMap.get(CRServo.class, "lowerRight");
-        upperLeft = hardwareMap.get(CRServo.class, "upperLeft");
-        upperRight = hardwareMap.get(CRServo.class, "upperRight");
+        lowerLeft = hardwareMap.get(CRServo.class, "blSpinner");
+        lowerRight = hardwareMap.get(CRServo.class, "brSpinner");
+        upperLeft = hardwareMap.get(CRServo.class, "tlSpinner");
+        upperRight = hardwareMap.get(CRServo.class, "trSpinner");
 
         // Set reverse motors
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
 //        intake.setDirection(DcMotorSimple.Direction.REVERSE);
-//        upperRight.setDirection(DcMotorSimple.Direction.REVERSE);
-//        lowerRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        upperRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        lowerRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        upperLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        lowerLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        shootMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         //encoders
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -278,7 +281,7 @@ public class MashedPotatoRobot {
     public void gamePadPower(Gamepad gp1, Gamepad gp2, Telemetry telemetry) {
         odo.update();
 //        camera.update();
-        setLock(gp2);
+//        setLock(gp2);
 //checks to see if lock should be used, stops everything from moving if it is
 //otherwise run functions as normal
         if (locked){
@@ -337,7 +340,7 @@ public class MashedPotatoRobot {
         }
     }
     public void transferSystem(Gamepad gp2) {
-        double currentInput = gp2.left_stick_y;
+        double currentInput = -gp2.left_stick_y;
         if (currentInput > 0){
             upperRight.setPower(1.0);
             upperLeft.setPower(-1.0);
@@ -385,16 +388,16 @@ public class MashedPotatoRobot {
 
         if(gp2.right_trigger > 0.1) {
             if (shooterState == shooterStates.HIGH) {
-                shootMotor.setPower(0.45); // setting power fo the shoot motor based on what enum is used - Saumya
-                shootMotor2.setPower(0.45);
+                shootMotor.setPower(0.35); // setting power fo the shoot motor based on what enum is used - Saumya
+                shootMotor2.setPower(0.35);
             }
             if (shooterState == shooterStates.MID){
-                shootMotor.setPower(0.42);
-                shootMotor2.setPower(0.42);
+                shootMotor.setPower(0.32);
+                shootMotor2.setPower(0.32);
             }
             if (shooterState == shooterStates.LOW) {
-                shootMotor.setPower(0.37);
-                shootMotor2.setPower(0.37);
+                shootMotor.setPower(0.29);
+                shootMotor2.setPower(0.29);
             }
             if (shooterState == shooterStates.MANUAL) {
                 shootMotor.setPower(manualPower);
@@ -436,13 +439,13 @@ public class MashedPotatoRobot {
         blDrivePower = (drive - strafe + turn);
         brDrivePower = (drive + strafe - turn);
 
-        telemetry.addData("IMU-X", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).firstAngle);
-        telemetry.addData("IMU-Y", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).secondAngle);
-        telemetry.addData("IMU-Z", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).thirdAngle);
+//        telemetry.addData("IMU-X", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).firstAngle);
+//        telemetry.addData("IMU-Y", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).secondAngle);
+//        telemetry.addData("IMU-Z", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).thirdAngle);
 
         double imuPos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
-        telemetry.addData("IMU-Angle", imuPos);
-        telemetry.update();
+//        telemetry.addData("IMU-Angle", imuPos);
+//        telemetry.update();
 
         if (speedMode > 0.1) {
             slowdown = 1;
