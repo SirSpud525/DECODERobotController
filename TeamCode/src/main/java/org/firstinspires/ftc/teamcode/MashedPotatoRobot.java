@@ -129,11 +129,11 @@ public class MashedPotatoRobot {
         //Initializing odometry
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
 
-        odo.setOffsets(70, 315, DistanceUnit.MM);
-        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+//        odo.setOffsets(70, 315, DistanceUnit.MM);
+//        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+//        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
-        setOdo(0, 0, 45);
+//        setOdo(0, 0, 45);
     }
 
     //UTILITY FUNCTIONS
@@ -171,7 +171,8 @@ public class MashedPotatoRobot {
 //        telemetry.addData("BR Drive Power: ", brDrivePower);
 //        telemetry.addData("Drive Slowdown: ", driveSlowdown);
 //        telemetry.addData("Drive Mode: ", driveMode);
-        telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+//        telemetry.addData("Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        telemetry.addData("Angle", odo.getHeading(DEGREES));
 //        telemetry.addData("Camera: ", camera);
 //        telemetry.addData("Intake Power: ", intakePower);
 //        telemetry.addData("Shoot Power: ", shootPower);
@@ -301,6 +302,9 @@ public class MashedPotatoRobot {
                     Driving(gp1, telemetry);
                 }
             }
+            if (gp1.left_bumper && gp1.right_bumper){
+                resetOdo();
+            }
             toggleGyro(gp1);
             handleShootMotors(gp2);
             intake(gp2);
@@ -388,16 +392,16 @@ public class MashedPotatoRobot {
 
         if(gp2.right_trigger > 0.1) {
             if (shooterState == shooterStates.HIGH) {
-                shootMotor.setPower(0.35); // setting power fo the shoot motor based on what enum is used - Saumya
-                shootMotor2.setPower(0.35);
+                shootMotor.setPower(0.37); // setting power fo the shoot motor based on what enum is used - Saumya
+                shootMotor2.setPower(0.37);//0.35
             }
             if (shooterState == shooterStates.MID){
-                shootMotor.setPower(0.32);
-                shootMotor2.setPower(0.32);
+                shootMotor.setPower(0.33);
+                shootMotor2.setPower(0.33);//0.32
             }
             if (shooterState == shooterStates.LOW) {
-                shootMotor.setPower(0.29);
-                shootMotor2.setPower(0.29);
+                shootMotor.setPower(0.3);
+                shootMotor2.setPower(0.3);//0.29
             }
             if (shooterState == shooterStates.MANUAL) {
                 shootMotor.setPower(manualPower);
@@ -405,8 +409,8 @@ public class MashedPotatoRobot {
             }
 
         } else if(gp2.left_trigger > 0.1){
-            shootMotor.setPower(-0.8);
-            shootMotor2.setPower(-0.8);
+            shootMotor.setPower(-0.4);
+            shootMotor2.setPower(-0.4);
         }
         else {
             shootMotor.setPower(0); //setting power to 0 simple - Saumya
@@ -727,8 +731,8 @@ public class MashedPotatoRobot {
 
         brake();
 
-        double xmm = xPos * 10;
-        double ymm = yPos * 10;
+        double xmm = xPos;//*10 for cm
+        double ymm = yPos;//*10 for cm
         final int delay = 10;
         double error = 15.0;
         double angError = 0.5;
@@ -739,7 +743,7 @@ public class MashedPotatoRobot {
         while (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error || Math.abs(desAngle - odo.getHeading(DEGREES)) > angError){
             // Drive
             double xDist = xmm - odo.getPosX(DistanceUnit.MM);
-            double yDist = xmm - odo.getPosY(DistanceUnit.MM);
+            double yDist = ymm - odo.getPosY(DistanceUnit.MM);
 
             double drivePwr = yDist / (double) Math.abs(ymm);
             double strafePwr = xDist / (double) Math.abs(xmm);
@@ -798,17 +802,17 @@ public class MashedPotatoRobot {
             handleMotorPower();
             odo.update();
 
-            telemetry.addData("angleOffset", angle * 180/3.14);
-            telemetry.addData("heading", odo.getHeading(DEGREES));
-            telemetry.addData("flDrive", flDrivePower);
-            telemetry.addData("blDrive", blDrivePower);
-            telemetry.addData("frDrive", frDrivePower);
-            telemetry.addData("brDrive", brDrivePower);
-            telemetry.addData("drivePwr", drivePwr);
-            telemetry.addData("strafePwr", strafePwr);
-            telemetry.addData("xPos", odo.getPosX(DistanceUnit.MM));
-            telemetry.addData("yPos", odo.getPosY(DistanceUnit.MM));
-            telemetry.update();
+//            telemetry.addData("angleOffset", angle * 180/3.14);
+//            telemetry.addData("heading", odo.getHeading(DEGREES));
+//            telemetry.addData("flDrive", flDrivePower);
+//            telemetry.addData("blDrive", blDrivePower);
+//            telemetry.addData("frDrive", frDrivePower);
+//            telemetry.addData("brDrive", brDrivePower);
+//            telemetry.addData("drivePwr", drivePwr);
+//            telemetry.addData("strafePwr", strafePwr);
+//            telemetry.addData("xPos", odo.getPosX(DistanceUnit.MM));
+//            telemetry.addData("yPos", odo.getPosY(DistanceUnit.MM));
+//            telemetry.update();
 
             sleep(delay);
         }
@@ -1082,7 +1086,7 @@ public void transferPower(double power){
 public void setShootPower(int variableA){
         shootPower = variableA;
 }
-
+//potato
 public void donut() {
 
         double strafe = 1.0;

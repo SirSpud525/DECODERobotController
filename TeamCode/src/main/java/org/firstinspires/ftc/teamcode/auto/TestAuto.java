@@ -23,7 +23,7 @@ public class TestAuto extends LinearOpMode{
         waitForStart();
         //code here
 
-        robot.setCoords(90,90,45);
+        robot.setCoords(900,900,45);
 
         //code ends
         stop();

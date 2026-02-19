@@ -18,11 +18,11 @@ public class BigTriangleRed extends LinearOpMode{
         robot.init(hardwareMap);
 
         camera = new Camera(hardwareMap.get(WebcamName.class, "Webcam 1"));
-        robot.setOffsets(0,0,0);
+        robot.setOffsets(2755,2992,0);
 
         waitForStart();
         //code here
-
+        robot.setCoords(2078,1896,148);
 
 
         //code ends
