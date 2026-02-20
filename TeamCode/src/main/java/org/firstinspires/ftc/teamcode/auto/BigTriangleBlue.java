@@ -18,11 +18,23 @@ public class BigTriangleBlue extends LinearOpMode{
         robot.init(hardwareMap);
 
         camera = new Camera(hardwareMap.get(WebcamName.class, "Webcam 1"));
-        robot.setOffsets(0,0,0);
+        robot.setOffsets(401,3017,0);
 
         waitForStart();
         //code here
+        robot.setShootPower(0.2465);
+        robot.setCoords(1162,2160,-132.92);
+        robot.sleep(8000);
 
+        shoot();
+        robot.intakePower(-1.0);
+        robot.transferPower(-1.0);
+        robot.setShootPower(0.0);
+        robot.handleMotorPower(1500);
+//        robot.setCoords(2335,1944,-90);
+        robot.intakePower(1.0);
+        robot.transferPower(0.75);
+        robot.driveTo(1400, 0.25);
 
 
         //code ends
@@ -31,6 +43,36 @@ public class BigTriangleBlue extends LinearOpMode{
 
     public void shoot(){
         //shoot
+        //first - set power and spin up before calling this
+        robot.transferPower(1.0);
+        robot.intakePower(1.0);
+        robot.handleMotorPower(600);
+
+        //spin back up
+        robot.transferPower(0.0);
+        robot.intakePower(0.0);
+        robot.handleMotorPower(1500);
+
+        //second
+        robot.transferPower(1.0);
+        robot.intakePower(1.0);
+        robot.handleMotorPower(1200);
+
+        //spin back up
+        robot.transferPower(0.0);
+        robot.intakePower(0.0);
+        robot.handleMotorPower(1000);
+
+        //third
+        robot.transferPower(1.0);
+        robot.intakePower(1.0);
+        robot.handleMotorPower(3000);
+
+        //stop
+        robot.transferPower(0.0);
+        robot.intakePower(0.0);
+        robot.handleMotorPower();
+
     }
 
 }
