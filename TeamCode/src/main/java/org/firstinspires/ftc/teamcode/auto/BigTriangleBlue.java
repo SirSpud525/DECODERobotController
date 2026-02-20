@@ -24,18 +24,18 @@ public class BigTriangleBlue extends LinearOpMode{
         //code here
         robot.setShootPower(0.2465);
         robot.setCoords(1162,2160,-132.92);
-        robot.sleep(8000);
+        robot.sleep(6000);
 
         shoot();
         robot.intakePower(-1.0);
         robot.transferPower(-1.0);
         robot.setShootPower(0.0);
         robot.handleMotorPower(1500);
-//        robot.setCoords(2335,1944,-90);
+        robot.setCoords(1111,1866,90);
         robot.intakePower(1.0);
         robot.transferPower(0.75);
         robot.driveTo(1400, 0.25);
-
+        robot.turnToFromHere(0);
 
         //code ends
         stop();
@@ -66,7 +66,7 @@ public class BigTriangleBlue extends LinearOpMode{
         //third
         robot.transferPower(1.0);
         robot.intakePower(1.0);
-        robot.handleMotorPower(3000);
+        robot.handleMotorPower(5000);
 
         //stop
         robot.transferPower(0.0);
