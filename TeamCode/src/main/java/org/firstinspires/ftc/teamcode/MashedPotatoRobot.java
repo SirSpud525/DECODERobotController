@@ -96,9 +96,9 @@ public class MashedPotatoRobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shootMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        shootMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shootMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shootMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        shootMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shootMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -392,16 +392,16 @@ public class MashedPotatoRobot {
 
         if(gp2.right_trigger > 0.1) {
             if (shooterState == shooterStates.HIGH) {
-                shootMotor.setPower(0.37); // setting power fo the shoot motor based on what enum is used - Saumya
-                shootMotor2.setPower(0.37);//0.35
+                shootMotor.setPower(0.28); // setting power fo the shoot motor based on what enum is used - Saumya
+                shootMotor2.setPower(0.28);//0.35
             }
             if (shooterState == shooterStates.MID){
-                shootMotor.setPower(0.33);
-                shootMotor2.setPower(0.33);//0.32
+                shootMotor.setPower(0.265);
+                shootMotor2.setPower(0.265);//0.32
             }
             if (shooterState == shooterStates.LOW) {
-                shootMotor.setPower(0.3);
-                shootMotor2.setPower(0.3);//0.29
+                shootMotor.setPower(0.25);
+                shootMotor2.setPower(0.25);//0.29
             }
             if (shooterState == shooterStates.MANUAL) {
                 shootMotor.setPower(manualPower);
@@ -609,7 +609,7 @@ public class MashedPotatoRobot {
     }
 
         //AUTO FUNCTIONS
-    public void strafeTo(int pos) {
+    public void setX(int pos) {
         double targetAngle = 0;
 
         double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
@@ -824,6 +824,58 @@ public class MashedPotatoRobot {
 
     }
 
+    public void driveTo(int pos, double pct) {
+        if (pos == 0) return;
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        brake();
+
+        final int DELAY = 20;
+
+        while ((Math.abs(pos - frontLeft.getCurrentPosition()) + Math.abs(pos - frontRight.getCurrentPosition()) / 2) > 20) {
+            // Drive
+            int flDistance = pos - frontLeft.getCurrentPosition();
+            int frDistance = pos - frontRight.getCurrentPosition();
+            int blDistance = pos - backLeft.getCurrentPosition();
+            int brDistance = pos - backRight.getCurrentPosition();
+
+            flDrivePower = (double) flDistance / (double) Math.abs(pos);
+            blDrivePower = (double) blDistance / (double) Math.abs(pos);
+            frDrivePower = (double) frDistance / (double) Math.abs(pos);
+            brDrivePower = (double) brDistance / (double) Math.abs(pos);
+
+            if (Math.abs(pos - frontLeft.getCurrentPosition()) > 150 && Math.abs(pos - frontRight.getCurrentPosition()) > 150) {
+                flDrivePower = Math.signum(flDrivePower) * pct;
+                frDrivePower = Math.signum(frDrivePower) * pct;
+                blDrivePower = Math.signum(blDrivePower) * pct;
+                brDrivePower = Math.signum(brDrivePower) * pct;
+            } else {
+                flDrivePower = (flDrivePower) + (Math.signum(flDrivePower) * 0.1);
+                frDrivePower = (frDrivePower) + (Math.signum(frDrivePower) * 0.1);
+                blDrivePower = (blDrivePower) + (Math.signum(blDrivePower) * 0.1);
+                brDrivePower = (brDrivePower) + (Math.signum(brDrivePower) * 0.1);
+            }
+
+            // Slowdown
+//            flDrivePower = flDrivePower;
+//            frDrivePower = frDrivePower;
+//            blDrivePower = blDrivePower;
+//            brDrivePower = brDrivePower;
+
+            handleMotorPower();
+
+            sleep(DELAY);
+        }
+
+        brake();
+
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
     public void accurateStrafe(int pos) {
         double targetAngle = 0;
 
@@ -903,7 +955,7 @@ public class MashedPotatoRobot {
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    public void driveTo(int pos, double slowdown) {
+    public void setY(int pos, double slowdown) {
         if (pos == 0) return;
 
         brake();
@@ -1083,7 +1135,7 @@ public void transferPower(double power){
         lowRightPower = power ;
         // This function accepts power as a input and controls it(-1 -> left, 1-> right)
 }
-public void setShootPower(int variableA){
+public void setShootPower(double variableA){
         shootPower = variableA;
 }
 //potato
