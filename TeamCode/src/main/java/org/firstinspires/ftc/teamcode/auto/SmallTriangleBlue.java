@@ -23,9 +23,9 @@ public class SmallTriangleBlue extends LinearOpMode{
 
         waitForStart();
         //code here
-        robot.setShootPower(0.2825);
-        robot.setCoords(1393,238,-159);
-        robot.sleep(7000);
+        robot.setShootPower(0.28);
+        robot.setCoords(1380,220,-156);//1393, 238, -158.5
+        robot.sleep(6750);
         shoot();
 
         robot.intakePower(-1.0);
@@ -34,7 +34,7 @@ public class SmallTriangleBlue extends LinearOpMode{
 
         //intake
         robot.setShootPower(0.0);
-        robot.setCoords(965, 718, 90);
+        robot.setCoords(1000, 600, 90);
         robot.intakePower(1.0);
         robot.transferPower(0.75);
         robot.driveTo(1250, 0.25);
@@ -58,7 +58,7 @@ public class SmallTriangleBlue extends LinearOpMode{
         //spin back up
         robot.transferPower(0.0);
         robot.intakePower(0.0);
-        robot.handleMotorPower(1500);
+        robot.handleMotorPower(2000);
 
         //second
         robot.transferPower(1.0);
@@ -68,7 +68,7 @@ public class SmallTriangleBlue extends LinearOpMode{
         //spin back up
         robot.transferPower(0.0);
         robot.intakePower(0.0);
-        robot.handleMotorPower(1500);
+        robot.handleMotorPower(2000);
 
         //third
         robot.transferPower(1.0);

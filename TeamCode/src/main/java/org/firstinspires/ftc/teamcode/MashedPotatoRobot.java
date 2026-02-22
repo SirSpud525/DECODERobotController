@@ -290,7 +290,7 @@ public class MashedPotatoRobot {
             intake.setPower(0.0);
             shootMotor.setPower(0.0);
             shootMotor2.setPower(0.0);
-        }else {
+        } else {
             if (gp1.y) {
                 aimbot();
             } else if (gp1.b){
@@ -305,7 +305,10 @@ public class MashedPotatoRobot {
             if (gp1.left_bumper && gp1.right_bumper){
                 resetOdo();
             }
-            toggleGyro(gp1);
+            if (gp1.dpad_down){
+                desiredPose = odo.getPosition();
+            }
+//            toggleGyro(gp1);
             handleShootMotors(gp2);
             intake(gp2);
             transferSystem(gp2);
@@ -392,16 +395,16 @@ public class MashedPotatoRobot {
 
         if(gp2.right_trigger > 0.1) {
             if (shooterState == shooterStates.HIGH) {
-                shootMotor.setPower(0.283); // setting power fo the shoot motor based on what enum is used - Saumya
-                shootMotor2.setPower(0.283);//0.35
+                shootMotor.setPower(0.29); // setting power fo the shoot motor based on what enum is used - Saumya
+                shootMotor2.setPower(0.29);//0.35
             }
             if (shooterState == shooterStates.MID){
-                shootMotor.setPower(0.265);
-                shootMotor2.setPower(0.265);//0.32
+                shootMotor.setPower(0.244);
+                shootMotor2.setPower(0.244);//0.32
             }
             if (shooterState == shooterStates.LOW) {
-                shootMotor.setPower(0.25);
-                shootMotor2.setPower(0.25);//0.29
+                shootMotor.setPower(0.235);
+                shootMotor2.setPower(0.235);//0.29
             }
             if (shooterState == shooterStates.MANUAL) {
                 shootMotor.setPower(manualPower);
@@ -526,8 +529,8 @@ public class MashedPotatoRobot {
         if (curSide == side.BLUE) {
             targetAngle = -Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 7) / (343 - odo.getPosY(DistanceUnit.CM))));
         }else{
-            targetAngle = Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 313) / (346 - odo.getPosY(DistanceUnit.CM))));
-        }
+            targetAngle = Math.PI + (Math.atan((odo.getPosX(DistanceUnit.CM) - 323) / (356 - odo.getPosY(DistanceUnit.CM))));
+        }//313, 346
 
         double error = (targetAngle - odo.getHeading(RADIANS)) * (180 / Math.PI);
 
