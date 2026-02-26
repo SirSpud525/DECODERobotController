@@ -1144,8 +1144,8 @@ public void setShootPower(double variableA){
 //potato
 public void donut() {
 
-        double strafe = 1.0;
-        double turn = 0.25;
+        double strafe = 1.0; // 1 is right. -1 is left
+        double turn = -0.5;
 
         flDrivePower = (strafe + turn);
         frDrivePower = (-strafe - turn);
@@ -1158,6 +1158,24 @@ public void donut() {
         }
 
     }
+
+public void circleTurn(double centerX, double centerY)
+{   // variables
+    double startingX = odo.getPosX(DistanceUnit.MM);
+    double startingY = odo.getPosY(DistanceUnit.MM);
+    double radius = Math.sqrt(Math.pow((centerY-startingY),2)+Math.pow((centerX-startingX),2));
+    double strafe = 0.5;
+    double turn =  ((9.02694e-9)*Math.pow(radius,2))+(0.00327083*radius)+0.00219618; // got this from quadratic regression of measured points using donut function.
+    double drive = 0;
+
+    // changing Power
+    flDrivePower = (drive + strafe + turn);
+    frDrivePower = (drive - strafe - turn);
+    blDrivePower = (drive - strafe + turn);
+    brDrivePower = (drive + strafe - turn);
+    // actually puts power changes in effect
+    handleMotorPower(25);
+}
 
     //ENUMS
 
