@@ -33,6 +33,8 @@ public class MashedPotatoRobot {
     public double frDrivePower;
     public double brDrivePower;
     public double blDrivePower;
+    public double leftPower;
+    public double rightPower;
     public double shootPower;
     public double intakePower;
     public double transferPower;
@@ -42,9 +44,7 @@ public class MashedPotatoRobot {
     public side curSide = side.BLUE;
     public Pose2D desiredPose = new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 0);
     public double targetAngle = 0.0;
-
     public double manualPower = 0.5;
-
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backLeft;
@@ -53,6 +53,8 @@ public class MashedPotatoRobot {
     private DcMotor shootMotor2;
     private DcMotor intake;
     private DcMotor transfer;
+    private CRServo left;
+    private CRServo right;
     public IMU imu;
     public GoBildaPinpointDriver odo;
 
@@ -73,11 +75,18 @@ public class MashedPotatoRobot {
         intake = hardwareMap.get(DcMotor.class, "intake");
         transfer = hardwareMap.get(DcMotor.class, "transfer");
 
+//        left = hardwareMap.get(CRServo.class, "left");
+        right = hardwareMap.get(CRServo.class, "right");
+
         // Set reverse motors
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
 //        intake.setDirection(DcMotorSimple.Direction.REVERSE);
-        shootMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+//        shootMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        shootMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+//        left.setDirection(DcMotorSimple.Direction.REVERSE);
+        right.setDirection(DcMotorSimple.Direction.REVERSE);
 
         //encoders
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -142,11 +151,9 @@ public class MashedPotatoRobot {
         shootMotor.setPower(shootPower);
         shootMotor2.setPower(shootPower);
 
+//        left.setPower(leftPower);
+        right.setPower(rightPower);
         transfer.setPower(transferPower);
-//        lowerLeft.setPower(lowLeftPower);
-//        upperLeft.setPower(upLeftPower);
-//        lowerRight.setPower(lowRightPower);
-//        upperRight.setPower(upRightPower);
     }
 
     public void handleMotorPower(int wait) {
@@ -155,6 +162,12 @@ public class MashedPotatoRobot {
         sleep(wait);
 
     }
+    public double yaw(AngleUnit units){
+        return imu.getRobotYawPitchRollAngles().getYaw(units);
+    }
+    public double odoHeading(AngleUnit units){
+        return odo.getHeading(units);
+    }
     public void updateTelemetry(Telemetry telemetry) {
 //        telemetry.addData("FL Drive Power: ", flDrivePower);
 //        telemetry.addData("FR Drive Power: ", frDrivePower);
@@ -162,8 +175,8 @@ public class MashedPotatoRobot {
 //        telemetry.addData("BR Drive Power: ", brDrivePower);
 //        telemetry.addData("Drive Slowdown: ", driveSlowdown);
 //        telemetry.addData("Drive Mode: ", driveMode);
-        telemetry.addData("IMU Angle: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
-        telemetry.addData("Angle: ", odo.getHeading(DEGREES));
+        telemetry.addData("IMU Angle: ", yaw(DEGREES));
+        telemetry.addData("Angle: ", odoHeading(DEGREES));
 //        telemetry.addData("Camera: ", camera);
 //        telemetry.addData("Intake Power: ", intakePower);
 //        telemetry.addData("Shoot Power: ", shootPower);
@@ -226,7 +239,7 @@ public class MashedPotatoRobot {
         //returns the angle needed to turn the robot
         double x = odo.getPosX(DistanceUnit.MM);
         double y = odo.getPosY(DistanceUnit.MM);
-        targetAngle = 180 * Math.atan((initialY + y)/(initialX + x)) / 3.1415926 - imu.getRobotYawPitchRollAngles().getYaw();
+        targetAngle = 180 * Math.atan((initialY + y)/(initialX + x)) / 3.1415926 - yaw(DEGREES);
         return targetAngle;
     }
     private void setDriveMode(final DcMotor.RunMode mode) {
@@ -340,14 +353,24 @@ public class MashedPotatoRobot {
     public void transferSystem(Gamepad gp2) {
         double currentInput = -gp2.left_stick_y;
         if (currentInput > 0){
+            right.setPower(1.0);
+//            left.setPower(-1.0);
             transfer.setPower(1.0);
         } else if (currentInput < 0){
+            right.setPower(-1.0);
+//            left.setPower(1.0);
             transfer.setPower(-1.0);
         } else if (gp2.left_trigger > 0.1){
+            right.setPower(-1.0);
+//            left.setPower(1.0);
             transfer.setPower(-1.0);
         } else if (gp2.a){
+            right.setPower(1.0);
+//            left.setPower(-1.0);
             transfer.setPower(1.0);
         } else {
+            right.setPower(0.0);
+//            left.setPower(0.0);
             transfer.setPower(0.0);
         }
 
@@ -367,16 +390,16 @@ public class MashedPotatoRobot {
 
         if(gp2.right_trigger > 0.1) {
             if (shooterState == shooterStates.HIGH) {
-                shootMotor.setPower(0.29); // setting power fo the shoot motor based on what enum is used - Saumya
-//                shootMotor2.setPower(0.29);//0.29
+                shootMotor.setPower(0.59); // setting power for the shoot motor based on what enum is used - Saumya
+                shootMotor2.setPower(0.59);//0.29
             }
             if (shooterState == shooterStates.MID){
-                shootMotor.setPower(0.244);
-                shootMotor2.setPower(0.244);//0.32
+                shootMotor.setPower(0.54);
+                shootMotor2.setPower(0.54);//0.244
             }
             if (shooterState == shooterStates.LOW) {
-                shootMotor.setPower(0.235);
-                shootMotor2.setPower(0.235);//0.29
+                shootMotor.setPower(0.5);
+                shootMotor2.setPower(0.5);//0.235
             }
             if (shooterState == shooterStates.MANUAL) {
                 shootMotor.setPower(manualPower);
@@ -384,7 +407,7 @@ public class MashedPotatoRobot {
             }
 
         } else if(gp2.left_trigger > 0.1){
-//            shootMotor.setPower(-0.4);
+            shootMotor.setPower(-0.4);
             shootMotor2.setPower(-0.4);
         }
         else {
@@ -422,7 +445,7 @@ public class MashedPotatoRobot {
 //        telemetry.addData("IMU-Y", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).secondAngle);
 //        telemetry.addData("IMU-Z", imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, DEGREES).thirdAngle);
 
-        double imuPos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
+        double imuPos = yaw(DEGREES);
 //        telemetry.addData("IMU-Angle", imuPos);
 //        telemetry.update();
 
@@ -450,7 +473,7 @@ public class MashedPotatoRobot {
         }
 
         //get IMU
-        double imuPos = (imu.getRobotYawPitchRollAngles().getYaw(RADIANS));
+        double imuPos = (yaw(RADIANS));
         telemetry.addData("IMU-Angle", imuPos);
 
         //return target angle
@@ -504,7 +527,7 @@ public class MashedPotatoRobot {
             targetAngle = (Math.atan((odo.getPosX(DistanceUnit.CM) - 323) / (356 - odo.getPosY(DistanceUnit.CM))));//was Math.PI +
         }//313, 346
 
-        double error = (targetAngle - odo.getHeading(RADIANS)) * (180 / Math.PI);
+        double error = (targetAngle - odoHeading(RADIANS)) * (180 / Math.PI);
 
         double kp = 1;
 
@@ -560,7 +583,7 @@ public class MashedPotatoRobot {
                 strafePwr = 1.2 * Math.signum(xDist);
             }
 
-            double angle = odo.getHeading(RADIANS);
+            double angle = odoHeading(RADIANS);
 
             double cosine = Math.cos(-angle);
             double sine = Math.sin(-angle);
@@ -587,7 +610,7 @@ public class MashedPotatoRobot {
     public void setX(int pos) {
         double targetAngle = 0;
 
-        double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double currentAngle = yaw(DEGREES);
         double errorAngle = targetAngle - currentAngle;
 
         brake();
@@ -628,7 +651,7 @@ public class MashedPotatoRobot {
             }
 
             // Correct angle
-            currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            currentAngle = yaw(DEGREES);
             errorAngle = targetAngle - currentAngle;
 
             double kp = 1;
@@ -680,7 +703,7 @@ public class MashedPotatoRobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        double Pitch = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES); //makes sure that it strafes relative to the starting IMU pos
+        double Pitch = yaw(DEGREES); //makes sure that it strafes relative to the starting IMU pos
         double angleInRadians = Math.toRadians(degrees + 315 - Pitch); //0 deg, would strafe right, 90 deg would strafe up, etc.
         double cosValue = Math.cos(angleInRadians);
         double sinValue = Math.sin(angleInRadians);
@@ -715,7 +738,7 @@ public class MashedPotatoRobot {
         double kp = 1;
         odo.update();
 
-        while (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error || Math.abs(desAngle - odo.getHeading(DEGREES)) > angError){
+        while (Math.abs(xmm - odo.getPosX(DistanceUnit.MM)) > error || Math.abs(ymm - odo.getPosY(DistanceUnit.MM)) > error || Math.abs(desAngle - odoHeading(DEGREES)) > angError){
             // Drive
             double xDist = xmm - odo.getPosX(DistanceUnit.MM);
             double yDist = ymm - odo.getPosY(DistanceUnit.MM);
@@ -741,7 +764,7 @@ public class MashedPotatoRobot {
                 strafePwr = 1.2 * Math.signum(xDist);
             }
 
-            double angle = odo.getHeading(RADIANS);
+            double angle = odoHeading(RADIANS);
 
             double cosine = Math.cos(-angle);
             double sine = Math.sin(-angle);
@@ -760,7 +783,7 @@ public class MashedPotatoRobot {
             brDrivePower = (drivePwr + strafePwr) / 1.5;
 
 
-            double curAngError = desAngle - odo.getHeading(DEGREES);
+            double curAngError = desAngle - odoHeading(DEGREES);
 
             if (Math.abs(curAngError) > angError) {
                 double proportional = curAngError * kp;
@@ -854,7 +877,7 @@ public class MashedPotatoRobot {
     public void accurateStrafe(int pos) {
         double targetAngle = 0;
 
-        double currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double currentAngle = yaw(DEGREES);
         double errorAngle = targetAngle - currentAngle;
 
         brake();
@@ -893,7 +916,7 @@ public class MashedPotatoRobot {
             }
 
             // Correct angle
-            currentAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            currentAngle = yaw(DEGREES);
             errorAngle = targetAngle - currentAngle;
 
             double kp = 1;
@@ -979,7 +1002,7 @@ public class MashedPotatoRobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        double currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
+        double currentPosition = yaw(DEGREES);
         double error = target - currentPosition;
 
         double kp = 1;
@@ -987,7 +1010,7 @@ public class MashedPotatoRobot {
         final int DELAY = 50;
 
         while (Math.abs(error) > 2) {
-            currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
+            currentPosition = yaw(DEGREES);
             error = target - currentPosition;
 
             double proportional = error * kp;
@@ -1031,11 +1054,11 @@ public class MashedPotatoRobot {
 
 
         this.imu.resetYaw();
-        double pos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
+        double pos = yaw(DEGREES);
 
         //get within 15 degrees of target
         while (Math.abs(deg - pos) > 15) {
-            pos = this.imu.getRobotYawPitchRollAngles().getYaw(DEGREES);
+            pos = yaw(DEGREES);
 
             if (deg - pos >= 0) {
                 flDrivePower = 0.8;
@@ -1062,7 +1085,7 @@ public class MashedPotatoRobot {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        double currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double currentPosition = yaw(DEGREES);
         double error = target - currentPosition;
 
         double kp = 1;
@@ -1070,7 +1093,7 @@ public class MashedPotatoRobot {
         final int DELAY = 50;
 
         while (Math.abs(error) > 3) {
-            currentPosition = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            currentPosition = yaw(DEGREES);
             error = target - currentPosition;
 
             double proportional = error * kp;
@@ -1105,6 +1128,8 @@ public void intakePower(double power){
 
 public void transferPower(double power){
         transferPower = power;
+        leftPower = power * -1;
+        rightPower = power;
         // This function accepts power as a input and controls it(-1 -> left, 1-> right)
 }
 public void setShootPower(double variableA){
