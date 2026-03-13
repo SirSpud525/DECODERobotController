@@ -22,8 +22,8 @@ public class SmallTriangleRed extends LinearOpMode{
 
         waitForStart();
         //code here
-        robot.setShootPower(0.28);
-        robot.setCoords(2215,159,158.1);
+        robot.setShootPower(0.64);
+        robot.setCoords(2210,144,-17.5);//2215,159,158.1
         robot.sleep(7000);
         shoot();
 

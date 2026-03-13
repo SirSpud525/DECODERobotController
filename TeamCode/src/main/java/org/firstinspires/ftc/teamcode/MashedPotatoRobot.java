@@ -390,12 +390,12 @@ public class MashedPotatoRobot {
 
         if(gp2.right_trigger > 0.1) {
             if (shooterState == shooterStates.HIGH) {
-                shootMotor.setPower(0.59); // setting power for the shoot motor based on what enum is used - Saumya
-                shootMotor2.setPower(0.59);//0.29
+                shootMotor.setPower(0.64); // setting power for the shoot motor based on what enum is used - Saumya
+                shootMotor2.setPower(0.64);//0.29
             }
             if (shooterState == shooterStates.MID){
-                shootMotor.setPower(0.54);
-                shootMotor2.setPower(0.54);//0.244
+                shootMotor.setPower(0.535);
+                shootMotor2.setPower(0.535);//0.244
             }
             if (shooterState == shooterStates.LOW) {
                 shootMotor.setPower(0.5);
