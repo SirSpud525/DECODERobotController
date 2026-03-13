@@ -75,7 +75,7 @@ public class MashedPotatoRobot {
         intake = hardwareMap.get(DcMotor.class, "intake");
         transfer = hardwareMap.get(DcMotor.class, "transfer");
 
-//        left = hardwareMap.get(CRServo.class, "left");
+        left = hardwareMap.get(CRServo.class, "left");
         right = hardwareMap.get(CRServo.class, "right");
 
         // Set reverse motors
@@ -85,7 +85,7 @@ public class MashedPotatoRobot {
         transfer.setDirection(DcMotorSimple.Direction.REVERSE);
 //        shootMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         shootMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
-//        left.setDirection(DcMotorSimple.Direction.REVERSE);
+        left.setDirection(DcMotorSimple.Direction.REVERSE);
         right.setDirection(DcMotorSimple.Direction.REVERSE);
 
         //encoders
@@ -151,7 +151,7 @@ public class MashedPotatoRobot {
         shootMotor.setPower(shootPower);
         shootMotor2.setPower(shootPower);
 
-//        left.setPower(leftPower);
+        left.setPower(leftPower);
         right.setPower(rightPower);
         transfer.setPower(transferPower);
     }
@@ -354,23 +354,23 @@ public class MashedPotatoRobot {
         double currentInput = -gp2.left_stick_y;
         if (currentInput > 0){
             right.setPower(1.0);
-//            left.setPower(-1.0);
+            left.setPower(-1.0);
             transfer.setPower(1.0);
         } else if (currentInput < 0){
             right.setPower(-1.0);
-//            left.setPower(1.0);
+            left.setPower(1.0);
             transfer.setPower(-1.0);
         } else if (gp2.left_trigger > 0.1){
             right.setPower(-1.0);
-//            left.setPower(1.0);
+            left.setPower(1.0);
             transfer.setPower(-1.0);
         } else if (gp2.a){
             right.setPower(1.0);
-//            left.setPower(-1.0);
+            left.setPower(-1.0);
             transfer.setPower(1.0);
         } else {
             right.setPower(0.0);
-//            left.setPower(0.0);
+            left.setPower(0.0);
             transfer.setPower(0.0);
         }
 
