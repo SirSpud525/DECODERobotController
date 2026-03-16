@@ -23,7 +23,7 @@ public class BigTriangleBlue extends LinearOpMode{
         waitForStart();
         //code here
         robot.setShootPower(0.50);
-        robot.setCoords(1264,1949,40);//1162,2160,-132.92
+        robot.setCoords(1264,1949,40.3);//1162,2160,-132.92
         robot.sleep(6000);
 
         shoot();

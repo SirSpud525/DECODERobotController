@@ -29,6 +29,7 @@ public class MashedPotatoRobot {
     final String robotName = "Potato";
     public ElapsedTime driveModeDebounce = new ElapsedTime();
     private ElapsedTime lockDebounce = new ElapsedTime();
+    public ElapsedTime manualPwrDebounce = new ElapsedTime();
     public double flDrivePower;
     public double frDrivePower;
     public double brDrivePower;
@@ -44,7 +45,7 @@ public class MashedPotatoRobot {
     public side curSide = side.BLUE;
     public Pose2D desiredPose = new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 0);
     public double targetAngle = 0.0;
-    public double manualPower = 0.5;
+    public double manualPower = 0.64;
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backLeft;
@@ -187,6 +188,7 @@ public class MashedPotatoRobot {
 //        telemetry.addData("Power for shoots: ", distToPower(45));
 //        telemetry.addData("Actual power: ", leftShoot.getPower());
 //        telemetry.addData("Target angle: ", getTargetAngle(305,305));
+        telemetry.addData("Manual Pwr: ", manualPower);
 
         telemetry.update();
     }
@@ -368,6 +370,10 @@ public class MashedPotatoRobot {
             right.setPower(1.0);
             left.setPower(-1.0);
             transfer.setPower(1.0);
+        } else if (gp2.x){
+            right.setPower(-1.0);
+            left.setPower(-1.0);
+            transfer.setPower(1.0);
         } else {
             right.setPower(0.0);
             left.setPower(0.0);
@@ -379,19 +385,22 @@ public class MashedPotatoRobot {
     public void handleShootMotors(Gamepad gp2) {
         if (gp2.dpad_up) {
             shooterState = shooterStates.HIGH; //enum name mentioned here - Saumya
+            manualPower = 0.657;
         }
         if (gp2.dpad_down) {
             shooterState = shooterStates.LOW;//enum name mentioned here - Saumya
+            manualPower = 0.535;
         }
 
         if (gp2.dpad_right || gp2.dpad_left) {
             shooterState = shooterStates.MID;//enum name mentioned here - Saumya
+            manualPower = 0.5;
         }
 
         if(gp2.right_trigger > 0.1) {
             if (shooterState == shooterStates.HIGH) {
-                shootMotor.setPower(0.64); // setting power for the shoot motor based on what enum is used - Saumya
-                shootMotor2.setPower(0.64);//0.29
+                shootMotor.setPower(0.657); // setting power for the shoot motor based on what enum is used - Saumya
+                shootMotor2.setPower(0.657);//0.29
             }
             if (shooterState == shooterStates.MID){
                 shootMotor.setPower(0.535);
@@ -415,13 +424,20 @@ public class MashedPotatoRobot {
             shootMotor2.setPower(0.0);
         }
 
-        if (gp2.left_bumper == true){
-            manualPower = manualPower - 0.01;
+        if (manualPwrDebounce.milliseconds() > 250) {
+            if (gp2.left_bumper && gp2.right_bumper) {
+                shooterState = shooterStates.MANUAL;
+            } else {
+                if (gp2.left_bumper == true) {
+                    manualPower = manualPower - 0.01;
+                    manualPwrDebounce.reset();
+                }
+                if (gp2.right_bumper == true) {
+                    manualPower = manualPower + 0.01;
+                    manualPwrDebounce.reset();
+                }
+            }
         }
-        if (gp2.right_bumper == true){
-            manualPower = manualPower + 0.01;
-        }
-
     }
 
     public void Driving(Gamepad gp1, Telemetry telemetry) {
