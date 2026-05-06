@@ -42,7 +42,7 @@ public class MashedPotatoRobot {
     public boolean gyroDrive = false;
     public boolean locked = false;
     public shooterStates shooterState = shooterStates.HIGH;
-    public side curSide = side.BLUE;
+    public side curSide = side.NONE;
     public Pose2D desiredPose = new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 0);
     public double targetAngle = 0.0;
     public double manualPower = 0.64;
@@ -314,7 +314,7 @@ public class MashedPotatoRobot {
             if (gp1.dpad_down){
                 desiredPose = odo.getPosition();
             }
-//            toggleGyro(gp1);
+            toggleGyro(gp1);
             handleShootMotors(gp2);
             intake(gp2);
             transferSystem(gp2);
@@ -492,6 +492,14 @@ public class MashedPotatoRobot {
         double imuPos = (yaw(RADIANS));
         telemetry.addData("IMU-Angle", imuPos);
 
+        //adding offset because of how this season's game is
+        if (curSide == side.RED){
+            imuPos += Math.PI/2;
+        } else if (curSide == side.BLUE) {
+            imuPos -= Math.PI/2;
+        }
+        imuPos = AngleUnit.normalizeRadians(imuPos);
+
         //return target angle
         telemetry.addData("Target angle: ", getTargetAngle(305,305));
 
@@ -537,7 +545,7 @@ public class MashedPotatoRobot {
     public void aimbot() {
         double targetAngle;
 
-        if (curSide == side.BLUE) {
+        if (curSide == side.BLUE || curSide == side.NONE) {
             targetAngle = (Math.atan((odo.getPosX(DistanceUnit.CM) - 7) / (343 - odo.getPosY(DistanceUnit.CM))));//was -Math.PI +
         }else{
             targetAngle = (Math.atan((odo.getPosX(DistanceUnit.CM) - 323) / (356 - odo.getPosY(DistanceUnit.CM))));//was Math.PI +
@@ -1195,7 +1203,8 @@ public void circleTurn(double centerX, double centerY)
 
     public enum side {
         BLUE,
-        RED
+        RED,
+        NONE
     }
 
 }
