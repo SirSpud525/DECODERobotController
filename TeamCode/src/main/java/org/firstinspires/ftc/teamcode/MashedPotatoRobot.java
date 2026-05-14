@@ -39,13 +39,14 @@ public class MashedPotatoRobot {
     public double shootPower;
     public double intakePower;
     public double transferPower;
-    public boolean gyroDrive = false;
+    public boolean gyroDrive = true;
     public boolean locked = false;
     public shooterStates shooterState = shooterStates.HIGH;
     public side curSide = side.NONE;
     public Pose2D desiredPose = new Pose2D(DistanceUnit.MM, 0, 0, RADIANS, 0);
     public double targetAngle = 0.0;
     public double manualPower = 0.64;
+    public double displayPwr = 0.2;
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backLeft;
@@ -321,6 +322,18 @@ public class MashedPotatoRobot {
         }
         updateTelemetry(telemetry);
     }
+    public void display(Gamepad gp1){
+        frontLeft.setPower(displayPwr);
+        frontRight.setPower(-1 * displayPwr);
+        backLeft.setPower(displayPwr);
+        backRight.setPower(-1 * displayPwr);
+        if (gp1.right_trigger > 0.1){
+            displayPwr += 0.001;
+        }
+        if (gp1.left_trigger > 0.1){
+            displayPwr -= 0.001;
+        }
+    }
     public void setLock(Gamepad gp) {
         if (gp.y) {
             if (lockDebounce.milliseconds() < 500) return;
@@ -343,7 +356,7 @@ public class MashedPotatoRobot {
     }
     public void intake(Gamepad gp2) {
         //sets intake power when b is pressed
-        if (gp2.a == true || gp2.x == true) {
+        if (gp2.a == true || gp2.x == true || gp2.y) {
             intake.setPower(1.0);
         }
         else if (gp2.left_trigger > 0.1){
@@ -362,7 +375,7 @@ public class MashedPotatoRobot {
             right.setPower(-1.0);
             left.setPower(1.0);
             transfer.setPower(-1.0);
-        } else if (gp2.left_trigger > 0.1){
+        } else if (gp2.left_trigger > 0.1 || gp2.y){
             right.setPower(-1.0);
             left.setPower(1.0);
             transfer.setPower(-1.0);
@@ -372,7 +385,7 @@ public class MashedPotatoRobot {
             transfer.setPower(1.0);
         } else if (gp2.x){
             right.setPower(-1.0);
-            left.setPower(-1.0);
+            left.setPower(1.0);
             transfer.setPower(1.0);
         } else {
             right.setPower(0.0);
@@ -415,7 +428,7 @@ public class MashedPotatoRobot {
                 shootMotor2.setPower(manualPower);
             }
 
-        } else if(gp2.left_trigger > 0.1){
+        } else if(gp2.left_trigger > 0.1 || gp2.y){
             shootMotor.setPower(-0.4);
             shootMotor2.setPower(-0.4);
         }
