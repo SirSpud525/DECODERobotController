@@ -47,6 +47,7 @@ public class MashedPotatoRobot {
     public double targetAngle = 0.0;
     public double manualPower = 0.64;
     public double displayPwr = 0.2;
+    public double adjustment = 0.05;
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backLeft;
@@ -323,15 +324,21 @@ public class MashedPotatoRobot {
         updateTelemetry(telemetry);
     }
     public void display(Gamepad gp1){
-        frontLeft.setPower(displayPwr);
+        frontLeft.setPower(displayPwr + adjustment);
         frontRight.setPower(-1 * displayPwr);
-        backLeft.setPower(displayPwr);
+        backLeft.setPower(displayPwr + adjustment);
         backRight.setPower(-1 * displayPwr);
         if (gp1.right_trigger > 0.1){
             displayPwr += 0.001;
         }
         if (gp1.left_trigger > 0.1){
             displayPwr -= 0.001;
+        }
+        if (gp1.right_bumper){
+            adjustment += 0.001;
+        }
+        if (gp1.left_bumper){
+            adjustment -= 0.001;
         }
     }
     public void setLock(Gamepad gp) {
